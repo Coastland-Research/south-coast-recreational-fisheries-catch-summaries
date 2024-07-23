@@ -1,0 +1,228 @@
+---
+title: "SBC Chinook Creel Survey Summary"
+subtitle: "2011-2023"
+output:
+  pdf_document:
+    extra_dependencies: ["float"]
+  html_notebook: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE}
+
+library(data.table)
+library(tidyverse)
+library(RColorBrewer)
+library(ggpubr)
+library(stringr)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+require(readxl)
+```
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE, include=FALSE}
+pfmalevels=c("11","111","12","13","14","15","16","17","18","19","20","21","121","23","123","24","124","25","125","26","126","27","127","28","29")
+
+data<-read_excel("data/south coast creel data.xlsx",sheet="Sheet1")%>%
+  mutate(pfma=factor(pfma,levels=pfmalevels))
+
+perse<-read_excel("data/catch and release data april 2023 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
+
+```
+
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,include=FALSE,fig.height=6,fig.width=6,fig.cap="Creel reported effort and kept and released catch for 2022."}
+data22<-data%>%filter(year==2022)
+
+d22<-read_excel("data/catch and release data april 2023 version.xlsx",sheet="2023 sept creel survey totals")
+
+ggplot(data22,aes(y=value,x=pfma,fill=month))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  facet_wrap(metric~.,ncol=1)+
+  labs("Value")+
+  theme_bw()
+
+```
+
+
+\newpage
+
+# 2023 Creel Survey Summary
+
+
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,fig.height=6,fig.width=6,fig.cap="Creel reported effort and kept and released catch for 2023."}
+data23<-data%>%filter(year==2023)
+
+ggplot(data23,aes(y=value,x=pfma,fill=month))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  facet_wrap(metric~.,ncol=1)+
+  theme_bw() +
+  labs(x = "PFMA", y = "Number of Chinook")
+
+  
+```
+
+\newpage
+
+```{r 2023 creel survey summary,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="Top: Total encounters of Chinook by area and area grouping for 2023 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2023 YTD versus 5-yr average)."}
+
+
+d22.long<-d22%>%mutate(encounters=kept+released)%>%
+pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+  mutate(area2=factor(area))
+
+d22.effort<-d22.long%>%filter(disposition=="effort")
+
+e22.1<-ggplot(d22.effort,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Effort",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.effort.pchange<-d22.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2023`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+e22.2<-ggplot(d22.effort.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Effort (2023 versus 5-yr average)")
+```
+\newpage
+```{r 2023 creel survey summary output effort,include=TRUE,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="Total effort by area and area grouping for 2023 year to date and the 5-yr average. Bottom: Percentage change in total effort (2023 YTD versus 5-yr average)."}
+# include = TRUE, But does not represent chinook-directed effort
+e22.1/e22.2
+
+```
+
+\newpage
+
+```{r 2023 creel survey summary kept,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap=")."}
+d22.kept<-d22.long%>%filter(disposition=="kept")
+
+c22.1<-ggplot(d22.kept,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Kept Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.kept.pchange<-d22.kept%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2023`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+c22.2<-ggplot(d22.kept.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Kept Catch\n(2023 versus 5-yr average)")
+```
+
+-   Kept Chinook in 2023 variable against 5-yr average, higher released numbers in Fraser approach and JDF, variable in SOG (higher in PFMA 18, lower in PFMA 16)
+
+```{r 2023 creel survey summary output kept,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="Top: Total kept catch of Chinook by area and area grouping for 2023 year to date and the 5-yr average. Bottom: Percentage change in total kept catch (2023 YTD versus 5-yr average)."}
+
+c22.1/c22.2
+
+```
+
+\newpage
+
+```{r 2023 creel survey summary release,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap=")."}
+d22.rel<-d22.long%>%filter(disposition=="released")
+
+r22.1<-ggplot(d22.rel,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Released Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.rel.pchange<-d22.rel%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2023`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+r22.2<-ggplot(d22.rel.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Released Catch\n(2023 versus 5-yr average)")
+```
+
+-   released Chinook in 2023 variable, higher released numbers in Fraser approach and JDF, variable in SOG (much higher in PFMA 18, lower in PFMA 16)
+
+```{r 2023 creel survey summary output released,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="Top: Total released catch of Chinook by area and area grouping for 2023 year to date and the 5-yr average. Bottom: Percentage change in total released catch (2023 YTD versus 5-yr average)."}
+
+r22.1/r22.2
+
+```
+
+\newpage
+
+```{r 2023 creel survey summary encounters,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap=")."}
+d22.enc<-d22.long%>%filter(disposition=="encounters")
+
+enc22.1<-ggplot(d22.enc,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Total Encounters of Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.enc.pchange<-d22.enc%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2023`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+enc22.2<-ggplot(d22.enc.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Total Encounters\n(2023 versus 5-yr average)")
+```
+
+-   Encounters of Chinook in 2023 variable, higher total encounters in Fraser approach and JDF, variable in SOG (much higher in PFMA 18, lower in PFMA 16)
+
+```{r 2023 creel survey summary output encounters,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="Top: Total encounters of Chinook by area and area grouping for 2023 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2023 YTD versus 5-yr average)."}
+enc22.1/enc22.2
+```
+
+\newpage
+
+-   Uncertainty in the creel effort ranges from low to high depending on the area.
+
+```{r 2023 creel survey summary per SE,echo=FALSE,message=FALSE,warning=FALSE,fig.height=7,fig.width=8,fig.cap="September 2023 creel survey SE percent values for visualising uncertainty."}
+perse2<-perse%>%
+  mutate(use=case_when(perse<=25~"relatively certain",
+                       perse>=25&perse<=50~"use with caution",
+                       perse>50~"high uncertainty"))
+
+ggplot(perse2,aes(x=area2,y=perse,fill=factor(use,levels=c("relatively certain","use with caution","high uncertainty"))))+
+         geom_col()+theme_bw()+
+         facet_grid(disposition~region,space="free",switch="x",scale="free_x",labeller = labeller(region = label_wrap_gen(10)))+
+  scale_fill_manual(values=c("dark green","orange","firebrick"))+
+  labs(x="Area",y="Percent or Relative Standard Error",fill="")+
+  theme(legend.position = "bottom")
+
+ggsave("outputs/chinook percent standard error 2023 creel survey.png",dpi=600,height=6,width=7)
+
+```
+

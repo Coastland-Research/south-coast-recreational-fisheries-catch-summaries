@@ -1,0 +1,485 @@
+---
+title: "SBC CATCH"
+author: "Coastland"
+date: "30/03/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,include=FALSE}
+setwd("C:/Users/Andy1/Documents/R/sbc-chinook-catch-effort-stock-comps/")
+
+options(scipen=1000)
+library(data.table)
+library(tidyverse)
+library(RColorBrewer)
+library(ggpubr)
+library(stringr)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+require(readxl)
+```
+
+
+```{r,include=FALSE}
+#### load data and make longer ####
+dir()
+
+data<-read_excel("data/Rec Catch by AREA good.xlsx",sheet="rec by area by year")
+
+gg.data<-data%>%pivot_longer(4:9,names_to="Area",values_to="Fish")%>%
+    mutate(Name=paste0(Type,"-",Distinction))
+
+unique(gg.data$Type)
+
+#write.csv(gg.data,"SBC CN catch and release long.csv")
+
+
+```
+
+# SBC Chinook Rec Catch and Releases
+## Legal and Sub-legal kept and release catch of Chinook by Area
+```{r,echo=FALSE, warning=FALSE,fig.align=.5,fig.height=6,fig.width=8}
+ggplot(gg.data,aes(x=YEAR,y=Fish,fill=Area))+
+  geom_col(color="grey20")+
+  theme_bw()+
+  scale_fill_brewer(palette="Set1")+
+  labs(y="Catch",x="Year",title="Chinook: Catch by Distinction")+
+  facet_wrap(~Name,ncol=1)+
+  theme(legend.position="bottom")
+
+ggplot(gg.data,aes(x=YEAR,y=Fish,fill=Area))+
+  geom_col(position="fill",color="grey20")+
+  theme_bw()+
+  scale_fill_brewer(palette="Set1")+
+  facet_wrap(~Name,ncol=1)+
+  labs(y="Proportion of Catch",x="Year",title="Chinook: Proportion of Catch by Area")+
+  theme(legend.position="bottom")
+```
+
+
+```{r,echo=FALSE, warning=FALSE,fig.align=.5,fig.height=8,fig.width=8}
+ggplot(gg.data,aes(x=YEAR,y=Fish,fill=Area))+
+  geom_col(color="grey20")+
+  theme_bw()+
+  facet_grid(Name~Area,scales="free_y")+
+  scale_fill_brewer(palette="Set1")+
+  labs(y="Number of Chinook",x="Year",title="Chinook Recreational Catch by Category and Area")+
+  theme(legend.position="none",strip.text.y=element_text(size=6,angle=0))
+
+ggsave("SBC CN rec catch by category and area.png",height=6,width=10,dpi=600)
+
+GST<-gg.data%>%filter(Area%in%c("Northern GST","Southern GST"))
+
+ggplot(GST,aes(x=YEAR,y=Fish,fill=Area))+
+  geom_col(color="grey20")+
+  theme_bw()+
+  facet_grid(Name~Area,scales="free_y")+
+  scale_fill_brewer(palette="Set1")+
+  labs(y="Number of Chinook",x="Year",title="Chinook Recreational Catch by Category and Area")+
+  theme(legend.position="none",strip.text.y=element_text(size=8,angle=0))
+
+ggsave("SBC CN rec catch by category and area-just GST.png",height=5,width=7,dpi=600)
+
+```
+
+
+```{r,echo=FALSE, warning=FALSE,fig.align=.5,fig.height=8,fig.width=8}
+#Last 10
+
+sy<-2014
+ly<-2018
+
+base<-gg.data%>%filter(YEAR>=2014&YEAR<=2018)%>%group_by(Distinction,Type,Area)%>%summarise(Fish=mean(Fish,na.rm=TRUE))%>%mutate(YEAR="2014-2018")%>%ungroup()
+
+recent<-gg.data%>%filter(YEAR%in%c(2019,2020,2021))%>%select(Distinction,Type,Area,Fish,YEAR,-Name)%>%mutate(YEAR=as.character((YEAR)))
+
+newdata<-rbind(base,recent)%>%mutate(Name=paste0(Distinction,"-",Type))%>%
+  mutate(Period=ifelse(YEAR=="2014-2018","Base","Recent"))
+
+ggplot(newdata,aes(x=YEAR,y=Fish,fill=Period))+
+  geom_col()+
+  scale_fill_brewer(palette="Set1")+
+  facet_grid(Name~Area)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,hjust=1))
+
+ggsave("SBC CN rec catch by area recent versus base.png",height=6,width=10,dpi=600)
+
+```
+
+
+```{r,include=FALSE}
+data2<-read_excel("SBC CN catch and release long.xlsx",sheet="SBC CN catch and release long")%>%
+  mutate(Name=paste0(Type,"-",Distinction))%>%
+  select(-Type,-Distinction)%>%
+  rename(`Kept/Released`=Fish)%>%
+  mutate(FRIM.DFO=ifelse(is.na(`Kept/Released`),NA,FRIM.DFO),
+         FRIM.PSC=ifelse(is.na(`Kept/Released`),NA,FRIM.PSC),
+         FRIM.RISK.MODEL=ifelse(is.na(`Kept/Released`),NA,FRIM.RISK.MODEL))
+
+#write.csv(data2,"output test.csv",row.names=FALSE,na="")
+
+data3<-data2%>%pivot_longer(3:6,names_to="Type",values_to="Fish")
+d4<-data3%>%filter(YEAR>=2010&Type!="Kept/Released")
+
+```
+
+
+## FRIM estimates by area and year for different FRIM estimates
+```{r, echo=FALSE, warning=FALSE,fig.align=.5,fig.height=12,fig.width=8}
+ggplot(d4,aes(x=YEAR,y=Fish,color=Type))+
+  #geom_col(position="dodge")+
+  geom_line()+geom_point(size=.7)+
+  facet_grid(Area~Name,scales="free_y")+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  scale_color_brewer(palette="Set1")+
+  labs(color="FRIM Estimate",x="Year",y="FRIM")
+
+
+ggplot(d4,aes(x=YEAR,y=Fish,color=Type))+
+  #geom_col(position="dodge")+
+  geom_line()+geom_point(size=.7)+
+  facet_wrap(Area~Name,ncol=3,scales="free_y")+
+  theme_bw()+
+  theme(legend.position="bottom",strip.text=element_text(size=6))+
+  scale_color_brewer(palette="Set1")+
+  labs(color="FRIM Estimate",x="Year",y="FRIM")
+
+```
+
+```{r,include=FALSE}
+d5<-d4%>%filter(Name!="Sub-Legal-Released")%>%
+  group_by(YEAR,Area,Type)%>%summarise(FRIM=sum(Fish,na.rm=TRUE))
+
+d6<-data3%>%filter(Name=="Legal-Kept"&Type=="Kept/Released")
+
+d.DFO<-d5%>%filter(Type=="FRIM.DFO")
+d.PSC<-d5%>%filter(Type=="FRIM.PSC")
+d.RISK<-d5%>%filter(Type=="FRIM.RISK.MODEL")
+
+tms<-rbind(merge(d6,d.DFO,by=c("YEAR","Area")),
+                merge(d6,d.PSC,by=c("YEAR","Area")),
+                      merge(d6,d.RISK,by=c("YEAR","Area")))%>%
+  mutate(tm=Fish+FRIM)
+
+ggplot(tms,aes(x=YEAR,y=tm,fill=Type.y))+
+  geom_col(position="dodge")+
+  facet_wrap(~Area,ncol=1,scales="free_y")+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  scale_fill_brewer(palette="Set1")+
+  labs(x="Year",y="Total Mortalities",fill="Estimate Type",
+       title="Chinook Total Mortalities by Area",
+       subtitle="2010-2021")
+
+out1<-data%>%pivot_longer(4:9,names_to="Area",values_to="Fish")%>%
+  pivot_wider(names_from="Distinction",values_from="Fish")
+  
+write.csv(out1,"frim test.csv")
+
+```
+
+```{r,echo=FALSE, warning=FALSE,fig.align=.5,fig.height=12,fig.width=8}
+ggplot(tms,aes(x=YEAR,y=tm,fill=Type.y))+
+  geom_col(position="dodge")+
+  facet_wrap(~Area,ncol=1,scales="free_y")+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  scale_fill_brewer(palette="Set1")+
+  labs(x="Year",y="Total Mortalities",fill="Estimate Type",
+       title="Chinook Total Mortalities by Area",
+       subtitle="2010-2021")
+
+```
+
+
+```{r,echo=FALSE}
+print(as.data.frame(data))
+```
+
+
+```{r,include=FALSE}
+
+data<-read_excel("FRIM and TM by month by area.xlsx",sheet="for R")
+
+data
+names(data)
+
+long<-data%>%pivot_longer(4:21,names_to="Type",values_to="Fish")
+
+long$Month<-factor(long$Month,levels=c("January","February","March","April","May","June","July",
+                                       "August","September","October","November","December"))
+
+names(data)
+
+
+enc<-data%>%select(`Area Grouping`, Year, Month,Kept,`Released Legal`,`Released Sub-legal`)%>%
+  mutate(Encounters=Kept+`Released Legal`+`Released Sub-legal`)
+
+enc$Month<-factor(enc$Month,levels=c("January","February","March","April","May","June","July",
+                                       "August","September","October","November","December"))
+
+enc.byyear<-enc%>%group_by(`Area Grouping`,Year)%>%summarise(Encounters=sum(Encounters,na.rm=TRUE))
+
+ggplot(enc.byyear,aes(x=Year,y=Encounters))+
+  geom_col(color="black",fill="steelblue")+
+  facet_wrap(~`Area Grouping`,ncol=3,scales="free_y")+
+  labs(fill="Year")+
+  theme(strip.text.x = element_text(size=10))+
+  theme_bw()
+
+
+ggplot(enc,aes(x=Year,y=Encounters,fill=Month))+
+  geom_col(position="dodge")+
+  facet_wrap(~`Area Grouping`,ncol=1,scales="free_y")+
+  theme_bw()
+
+enc<-data%>%select(`Area Grouping`, Year, Month,Kept,`Released Legal`,`Released Sub-legal`)%>%
+  mutate(Encounters=Kept+`Released Legal`+`Released Sub-legal`)%>%
+  filter(`Area Grouping`%in%c("sGST(17,18,19ab,28,29)","nGST(13,14,15,16)"))%>%
+  filter(Month%in%c("April","May","June","July",
+                                       "August","September"))
+
+enc$Month<-factor(enc$Month,levels=c("January","February","March","April","May","June","July",
+                                       "August","September","October","November","December"))
+
+ggplot(enc,aes(x=Year,y=Encounters,fill=Month))+
+  geom_col(position="dodge")+
+  facet_wrap(~`Area Grouping`,ncol=1,scales="free_y")+
+  theme_bw()
+
+ggplot(enc,aes(x=Month,y=Encounters,fill=factor(Year)))+
+  geom_col(position="dodge",color="black")+
+  facet_wrap(~`Area Grouping`,ncol=1,scales="free_y")+
+  labs(fill="Year")+
+  theme(strip.text.x = element_text(size=10))+
+  theme_bw()
+
+ggsave("Encounters by month with sub-legal nGST sGST 2010-2021.png",height=6,width=14,dpi=600)
+
+enc.byyear<-enc%>%group_by(`Area Grouping`,Year)%>%summarise(Encounters=sum(Encounters,na.rm=TRUE))
+
+ggplot(enc.byyear,aes(x=Year,y=Encounters))+
+  geom_col(color="black",fill="steelblue")+
+  facet_wrap(~`Area Grouping`,ncol=1,scales="free_y")+
+  labs(fill="Year")+
+  theme(strip.text.x = element_text(size=10))+
+  theme_bw()
+
+ggsave("Encounters by year with sub-legals nGST sGST 2010-2021.png",height=6,width=10,dpi=600)
+
+
+
+write.csv(long,"Catch and FRIM by Month by Area.csv")
+
+FRIMbyareamonth<-long%>%filter(Type%in%c("DFO FRIM Legal","PSC FRIM Legal","RISK MODEL FRIM LEGAL"))
+
+ggplot(FRIMbyareamonth,aes(x=Month,y=Fish,fill=Type))+
+  geom_col(position="dodge")+
+  facet_grid(Year~`Area Grouping`,scales="free_y")
+  
+
+ggsave("FRIM overview 2010-2021 all areas.png",height=6,width=14,dpi=600)
+
+JDFe<-long%>%filter(`Area Grouping`=="JDFeast(19cde,20cd)")
+
+plot.data<-long%>%filter(Type==c("Kept","Released Legal")&Year%in%c(2019,2020,2021))
+
+ggplot(plot.data,aes(x=Year,y=Fish,group=Month,fill=Type))+
+  geom_col(position="dodge",color="black")+
+  #geom_text(aes(label=Month),position=position_dodge(width=1),size=2,angle=0)+
+  geom_text(aes(x=Year, y=Fish, label=Month),stat="identity",position=position_dodge(width=1))+
+  facet_wrap(~`Area Grouping`,ncol=2,scales="free_y")+
+  theme_bw()
+
+ggsave("CandR overview 2019-2021 all areas.png",height=10,width=12,dpi=600)
+
+
+plot.data<-long%>%filter(Type==c("Kept","Released Legal")&Year%in%c(2019,2020,2021))
+unique(long$`Area Grouping`)
+
+plot.data<-long%>%filter(`Area Grouping`=="nGST(13,14,15,16)"&Year%in%c(2019,2020,2021))
+
+ggplot(plot.data,aes(x=Year,y=Fish,fill=Month))+
+  geom_col(position="dodge",color="black")+
+  facet_wrap(~Type,ncol=3,scales="free_y")+
+  theme_bw()
+
+ggsave("All metrics-nGST 2019-2021 by month.png",height=12,width=10,dpi=600)
+
+
+plot.data<-long%>%filter(Type=="Kept"&Year%in%c(2019,2020,2021))
+
+ggplot(plot.data,aes(x=Year,y=Fish,fill=Month))+
+  geom_col(position="dodge",color="black")+
+  facet_wrap(~`Area Grouping`,ncol=2,scales="free_y")+
+  labs(title=plot.data$Type[1])+
+  theme_bw()
+
+ggsave("All areas-Kept- 2019 to 2021 by month.png",height=10,width=8,dpi=600)
+
+#### GST by month ####
+plot.data<-long%>%filter(Type%in%c("Kept","Released Legal","Released Sub-legal")&
+                           Year%in%c(2019,2020,2021)&
+                           `Area Grouping`%in%c("sGST(17,18,19ab,28,29)","nGST(13,14,15,16)"))
+
+ggplot(plot.data,aes(x=Year,y=Fish,fill=Month))+
+  geom_col(position="dodge",color="black")+
+  facet_grid(`Area Grouping`~Type,scales="free_y",switch="y")+
+  theme_bw()
+
+ggsave("Kept Released Sub-GST monthly 2019 to 2021.png",height=5,width=8,dpi=600)
+
+ggplot(plot.data,aes(x=Month,y=Fish,fill=factor(Year)))+
+  geom_col(position="dodge",color="black")+
+  facet_grid(`Area Grouping`~Type,scales="free_y",switch="y")+
+  theme_bw()+labs(fill="Year")+
+  theme(axis.text.x = element_text(size=8,angle=90,hjust=1))
+
+ggsave("Kept Released Sub-GST by month 2019 to 2021.png",height=5,width=8,dpi=600)
+
+
+plot.data<-long%>%filter(Type%in%c("Kept","Released Legal","Released Sub-legal")&
+                           Year%in%c(2014,2015,2016,2017,2018,2019,2020,2021)&
+                           `Area Grouping`%in%c("sGST(17,18,19ab,28,29)","nGST(13,14,15,16)"))
+
+base<-plot.data%>%filter(Year%in%c(2014,2015,2016,2017,2018))%>%group_by(`Area Grouping`, Month, Type)%>%summarise(Fish=mean(Fish,na.rm=TRUE))%>%ungroup()%>%
+  mutate(Year="2014-2018")
+
+names(base)
+
+recent<-plot.data%>%filter(Year%in%c(2019,2020,2021))%>%select(`Area Grouping`,Year,Month,Type,Fish)
+
+newdata<-rbind(base,recent)%>%mutate(Period=ifelse(Year=="2014-2018","2014-2018","Recent"))
+
+ggplot(newdata,aes(x=Month,y=Fish,fill=Year))+
+  geom_col(position="dodge",color="black")+
+  facet_grid(`Area Grouping`~Type,scales="free_y",switch="y")+
+  #scale_fill_brewer(palette="Set1")+
+  scale_fill_manual(values=c("firebrick","grey70","grey50","grey30"))+
+  theme_bw()+labs(fill="Year")+
+  theme(axis.text.x = element_text(size=8,angle=90,hjust=1))
+
+ggsave("Kept Released Sub-GST by month 2019 to 2021 vs base.png",height=5,width=10,dpi=600)
+
+
+
+dir()
+```
+
+## CPUE
+```{r}
+
+cpue<-read_excel("SBC CHINOOK DATA1.xlsx",sheet="CPUE")%>%
+  pivot_longer("2010":"2021",names_to="Year",values_to="CPUE")
+
+ggplot(cpue,aes(x=Year,y=CPUE))+
+  geom_col()+
+  facet_grid(`Area Grouping2`~Disposition,scales="free_y",switch="y")+
+  theme_bw()+
+  theme(strip.text.y.left = element_text(angle = 0,size=8))
+
+ggsave("All areas-CPUE-.png",height=6,width=8,dpi=600)
+
+cpue
+
+
+#### GSI based FRIM AND TM ####
+
+gsi<-fread("2019 sGST GSI.csv")
+
+p.bygroup<-gsi%>%select(Stock,group,Kept=p.kept,Released=p.released)%>%
+  pivot_longer(3:4,names_to="Disposition",values_to="p")%>%
+  group_by(group,Disposition)%>%summarise(tot=sum(p,na.rm=TRUE))
+
+ggplot(p.bygroup,aes(x=group,y=tot))+
+  geom_col()+coord_flip()+
+  facet_wrap(~Disposition,ncol=2)+
+  ylim(0,1)+labs(x="Stock Group",y="Proportion")+
+  theme_bw()
+
+ggsave("Kept Released sGST 2019 GSI.png",height=5,width=7,dpi=600)
+
+fish.bygroup<-gsi%>%select(Stock,group,Kept=kept,Released=released)%>%
+  pivot_longer(3:4,names_to="Disposition",values_to="total")%>%
+  group_by(group,Disposition)%>%summarise(tot=sum(total,na.rm=TRUE))
+
+ggplot(fish.bygroup,aes(x=group,y=tot))+
+  geom_col()+coord_flip()+
+  facet_wrap(~Disposition,ncol=2)+
+  labs(x="Stock Group",y="Number of Chinook")+
+  theme_bw()
+
+ggsave("Kept Released toal by group sGST 2019 GSI.png",height=5,width=7,dpi=600)
+
+gsi
+
+frim.bygroup<-gsi%>%select(Stock,group,DFO=frim.dfo,PSC=frim.psc,Group1=frim.risk1,Group2=frim.risk2)%>%
+  pivot_longer(3:6,names_to="Model",values_to="FRIM")%>%
+  group_by(group,Model)%>%summarise(tot=sum(FRIM,na.rm=TRUE))%>%
+  mutate(Parameter="FRIM")
+
+tm.bygroup<-gsi%>%select(Stock,group,DFO=tm.dfo,PSC=tm.psc,Group1=tm.risk1,Group2=tm.risk2)%>%
+  pivot_longer(3:6,names_to="Model",values_to="TM")%>%
+  group_by(group,Model)%>%summarise(tot=sum(TM,na.rm=TRUE))%>%
+  mutate(Parameter="TM")
+
+both<-rbind(frim.bygroup,tm.bygroup)%>%mutate(Model=factor(Model,levels=c("Group2","Group1","PSC","DFO")))
+
+ggplot(both,aes(x=group,y=tot,fill=Model))+
+  geom_col(position="dodge")+coord_flip()+
+  labs(x="Stock Group",y="Number of Chinook")+
+  facet_wrap(~Parameter,ncol=2)+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()
+
+ggsave("FRIM and TM total by group sGST 2019 GSI.png",height=6,width=8,dpi=600)
+
+both.total<-both%>%group_by(Parameter,Model)%>%summarise(Total=sum(tot))%>%
+  mutate(Model=factor(Model,levels=c("DFO","PSC","Group1","Group2")))
+
+ggplot(both.total,aes(x=Model,y=Total,fill=Model))+
+         geom_col()+
+    facet_wrap(~Parameter,ncol=2)+labs(y="FRIM / Total Mortalities")+
+    geom_hline(yintercept=32019,color="black",linetype="dashed")+
+    scale_fill_brewer(palette="Set1")+
+    theme_bw()
+
+ggsave("Total FRIM and TM by model sGST 2019 GSI.png",height=6,width=7,dpi=600)
+         
+#write.csv(both,"FRIM and TM sGST 2019.csv")
+```
+
+```{r}
+
+data1<-read_excel("SBC CN catch and releases with FRIM.xlsx",sheet="Group1")%>%mutate(Group="Group1")
+data2<-read_excel("SBC CN catch and releases with FRIM.xlsx",sheet="Group2")%>%mutate(Group="Group2")
+groups<-rbind(data1,data2)
+
+plot.data<-groups%>%filter(YEAR>2018&Area%in%c("Southern GST","Northern GST"))%>%
+  select(-FRIM.DFO,-FRIM.PSC)%>%mutate(Name=paste0(Type,"-",Distinction))
+
+ggplot(plot.data,aes(x=YEAR,y=FRIM.RISK.MODEL,fill=Group))+
+  geom_col(position="dodge")+
+  facet_grid(Area~Name,scales="free_y",switch="y")+
+  theme_bw()+
+  scale_fill_brewer(palette="Set1")+
+  labs(y="FRIM",x="Year")
+  
+ggsave("FRIM by group GST.png",height=6,width=7,dpi=600)
+
+
+tinytex::reinstall_tinytex()
+update.packages(ask = FALSE, checkBuilt = TRUE)
+tinytex::tlmgr_update()
+
+```
+

@@ -1,0 +1,527 @@
+---
+title: "SBC Chinook Catch and Release Summary"
+subtitle: "2011-2021"
+output:
+  pdf_document:
+    extra_dependencies: ["float"]
+  html_notebook: default
+editor_options:
+  chunk_output_type: console
+---
+
+## Data Sources
+
+* 2010-2021 effort, catch and released numbers are based on DFO provided data
+* 2022 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from September 2022
+
+## Notes
+
+* sub-legal = smaller than the legal size limit
+* encounters = total number of kept, released-legal, and released sub-legal chinook
+
+
+```{r load library, echo=FALSE,message=FALSE,warning=FALSE}
+
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+
+options(scipen=1000)
+library(data.table)
+library(tidyverse)
+library(RColorBrewer)
+library(ggpubr)
+library(stringr)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+require(readxl)
+```
+
+```{r data read,  echo=FALSE,message=FALSE,warning=FALSE}
+data<-read_excel("data/catch and release data april 2022 version.xlsx",sheet="chinook catch and release")
+
+effort<-read_excel("data/catch and release data april 2022 version.xlsx",sheet="effort by target species")
+```
+
+
+```{r data read new 2022 effort data,  echo=FALSE,message=FALSE,warning=FALSE}
+new.effort.data<-fread("data/South_Coast_Recreational_effort_2012-2022.csv")
+#names(new.effort.data)
+
+new.effort.area.merge<-fread(("data/pfma to area groupings merge.csv"))
+
+e22.prep<-new.effort.data%>%
+  select(PFMA,YEAR,MONTH,MANAGEMENT,ESTIMATE,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR)
+
+e22<-merge(e22.prep,new.effort.area.merge,by="PFMA")%>%
+  mutate(PFMA=factor(PFMA,levels=c("PFMA 11","PFMA 111","PFMA 12",
+                                   "PFMA 13","PFMA 14","PFMA 15",
+                                   "PFMA 16","PFMA 17","PFMA 18",
+                                   "PFMA 19","PFMA 20","PFMA 21",
+                                   "PFMA 22","PFMA 23","PFMA 24","PFMA 25","PFMA 26","PFMA 27",
+                                   "PFMA 121","PFMA 123","PFMA 124","PFMA 125","PFMA 126","PFMA 127",
+                                   "PFMA 28","PFMA 29")))
+
+
+#x<-data.frame(PFMA=unique(e22.prep$PFMA))
+#write.csv(x,"data/pfma to area groupings merge.csv")
+
+years=seq(2012,2021,1)
+
+e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May","June","July","August","September","October","November","December"))
+
+```
+
+
+```{r 2022 data read and prep,  echo=FALSE,message=FALSE,warning=FALSE}
+d22<-read_excel("data/catch and release data april 2022 version.xlsx",sheet="2022 sept creel survey totals")
+
+d22.long<-d22%>%mutate(encounters=kept+released)%>%
+pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+  mutate(area2=factor(area))
+```
+
+
+```{r 2022 per SE data read,  echo=FALSE,message=FALSE,warning=FALSE}
+perse<-read_excel("data/catch and release data april 2022 version.xlsx",sheet="percent SE 2022 creel summary")%>%mutate(area2=factor(area))
+
+```
+
+
+```{r data prep, echo=FALSE,message=FALSE,warning=FALSE}
+
+gg.prep<-data%>%
+  select(PFMA,CREEL_SUB_AREA,YEAR,MONTH,DISPOSITION,ADIPOSE_MARK,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR,AREA=`Area Grouping`)
+
+years=seq(2011,2021,1)
+
+area.region.merge=data.frame(AREA=c("Alberni (23A,B)","Barkley (23C-Q)","Clayquot","Kyuquot",
+                                    "Nitinat","Nootka/Esp","Quatsino",
+                                    "NWVIoffshore(125,126,127)","SWVIoffshore(121,123,124)",
+                                    "JDFeast(19cde,20cd)","JDFwest(Renfrew 20abe)",
+                                    "nGST(13,14,15,16)","nJST(12)","sGST(17,18,19ab,28,29)","upperQCS(11,111)"),
+                             region=c("WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI",
+                                      "JDF","JDF",
+                                      "SOG/ECVI","SOG/ECVI","SOG/ECVI","SOG/ECVI"))
+
+months=factor(c("May","June","July","August","September"),levels=c("May","June","July","August","September"))
+month.merge<-data.frame(MONTH=c(5,6,7,8,9),Month=months)
+
+gg.effort.prep<-merge(effort,month.merge,by="MONTH")
+
+```
+
+\newpage
+
+# EFFORT DATA INCLUDING 2022
+
+* data from DFO
+* 2002-2022 by month by year by PFMA by management (ISBM versus AABM)
+* effort is total boat trips
+* unclear whether this is Chinook directed or total recreational effort (including other species etc.)
+
+```{r total effort all sbc new data,echo=FALSE,message=FALSE,warning=FALSE,fig.height=4,fig.width=5,fig.cap="Total effort in number of boat trips for all SBC areas."}
+e22.tot<-e22%>%group_by(YEAR)%>%summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+ggplot(e22.tot,aes(x=YEAR,y=total))+
+  geom_col()+
+  theme_bw()+
+  labs(x="Year",y="Total Effort SBC (boat trips)")
+```
+
+\newpage
+
+```{r total effort all sbc by area by year, echo=FALSE,message=FALSE,warning=FALSE,fig.height=8.5,fig.width=7,fig.cap="Total effort in number of boat trips by area for all SBC areas."}
+
+e22.byarea<-e22%>%group_by(PFMA,YEAR,AREA)%>%summarise(effort=sum(ESTIMATE,na.rm=TRUE))%>%
+  mutate(PFMA=factor(PFMA,levels=c("PFMA 11","PFMA 111","PFMA 12",
+                                   "PFMA 13","PFMA 14","PFMA 15",
+                                   "PFMA 16","PFMA 17","PFMA 18",
+                                   "PFMA 19","PFMA 20","PFMA 21",
+                                   "PFMA 22","PFMA 23","PFMA 24","PFMA 25","PFMA 26","PFMA 27",
+                                   "PFMA 121","PFMA 123","PFMA 124","PFMA 125","PFMA 126","PFMA 127",
+                                   "PFMA 28","PFMA 29")))
+
+cols<-brewer.pal(7,"Set1")[c(1:5,7)]
+
+ggplot(e22.byarea,aes(x=YEAR,y=effort,color=AREA))+
+  geom_point()+
+  geom_line()+
+  theme_bw()+
+  scale_color_manual(values=cols)+
+  facet_wrap(~PFMA,scale="free_y",ncol=3)+
+  theme(legend.position="bottom")+
+  labs(x="Year",y="Effort (boat trips)",color="Area")
+
+```
+
+\newpage
+
+```{r total effort all sbc by area by year only may-sept, echo=FALSE,include=FALSE,message=FALSE,warning=FALSE,fig.height=8.5,fig.width=7,fig.cap="Total effort in number of boat trips by area for all SBC areas-ONLY MAY to SEPTEMBER."}
+
+e22.byareaonlysomemonths<-e22%>%filter(MONTH%in%c("May","June","July","August","September"))%>%
+  group_by(PFMA,YEAR,AREA)%>%
+  summarise(effort=sum(ESTIMATE,na.rm=TRUE))
+
+cols<-brewer.pal(7,"Set1")[c(1:5,7)]
+
+ggplot(e22.byarea,aes(x=YEAR,y=effort,color=AREA))+
+  geom_point()+
+  geom_line()+
+  theme_bw()+
+  scale_color_manual(values=cols)+
+  facet_wrap(~PFMA,scale="free_y",ncol=3)+
+  theme(legend.position="bottom")+
+  labs(x="Year",y="Effort (boat trips)",color="Area")
+
+```
+
+\newpage
+
+```{r total by disposition all sbc,echo=FALSE,message=FALSE,warning=FALSE,fig.height=3,fig.width=5,fig.cap="Total encounters (column height) by disposition (kept, released and released sub-legal) Chinook for all SBC areas."}
+gg.totalbydis<-gg.prep%>%
+  group_by(YEAR,DISPOSITION)%>%
+  summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+c1<-ggplot(gg.totalbydis,aes(x=YEAR,y=total,fill=DISPOSITION))+
+  geom_col()+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
+  theme_bw()+
+  labs(x="Year",y="Chinook",fill="")+
+  geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=2)+
+  theme(legend.position="bottom")
+```
+
+
+```{r total effort all sbc, echo=FALSE,message=FALSE,warning=FALSE,fig.height=3,fig.width=5,fig.cap="Total Chinook directed effort by year and month for all SBC areas."}
+gg.efforttotal<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
+  group_by(YEAR,Month)%>%
+  summarise(total=sum(TRIPS,na.rm=TRUE))
+
+e1<-ggplot(gg.efforttotal,aes(x=YEAR,y=total,fill=factor(Month)))+
+  geom_col()+
+  theme_bw()+
+  scale_x_continuous(labels=as.character(seq(2014,2020,1)),breaks=seq(2014,2020,1))+
+  scale_fill_brewer(palette="Set1")+
+  labs(x="Year",y="Total Chinook Effort (trips)",fill="")+
+  geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=3)+
+  theme(legend.position="bottom")
+
+#ggsave("figures/chinook total by disposition all SBC.png",height=5,width=6,dpi=600)
+```
+
+
+```{r total catch release effort all sbc, echo=FALSE,message=FALSE,warning=FALSE,fig.height=8,fig.width=5,fig.cap="Top: Total encounters (column height) by disposition (kept, released and released sub-legal) Chinook for all SBC areas. Bottom: Total Chinook directed effort by year and month for all SBC areas."}
+ggarrange(c1,e1,ncol=1)
+```
+
+
+```{r total catch release effort all sbc, echo=FALSE,message=FALSE,warning=FALSE,fig.height=8,fig.width=5,fig.cap="Top: Total encounters (column height) by disposition (kept, released and released sub-legal) Chinook for all SBC areas. Bottom: Total Chinook directed effort by year and month for all SBC areas."}
+gg.effortbyarea<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
+  group_by(LRG_AREA_NME,YEAR)%>%
+  summarise(total=sum(TRIPS,na.rm=TRUE))
+
+ggplot(gg.effortbyarea,aes(x=YEAR,y=total))+
+  geom_point()+geom_line()+
+  theme_bw()+
+  facet_grid(LRG_AREA_NME~.,switch="y",scale="free_y")+
+  theme(strip.text.y.left=element_text(angle=0,size=8))+
+  labs(x="Year",y="Total Chinook Directed Effort")+
+  expand_limits(y=0)
+
+ggsave("figures/chinook directed effort by area.png",height=8,width=5,dpi=600)
+
+```
+
+\newpage
+
+```{r total across disposition by area,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Kept, released and released sub-legal Chinook by area."}
+gg.totalbydisbyarea<-gg.prep%>%
+  group_by(AREA,YEAR,DISPOSITION)%>%
+  summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,fill=DISPOSITION))+
+  geom_col()+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
+  theme_bw()+
+  facet_grid(AREA~DISPOSITION,scale="free_y",switch="y")+
+  labs(x="Year",y="Chinook",fill="")+
+ #geom_text(aes(label = total), position=position_stack(vjust=1), colour = "black",size=1,angle=90)+
+  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0,size=6))
+```
+
+
+```{r total across disposition by area for just some areas stacked, echo=FALSE,message=FALSE,warning=FALSE,fig.height=8,fig.width=8,fig.cap="Kept, released and released sub-legal Chinook by area for proposed MSF areas in SOG and JDF."}
+gg.totalbydisbyarea.msf<-gg.prep%>%
+  filter(AREA%in%c("JDFeast(19cde,20cd)","JDFwest(Renfrew 20abe)","sGST(17,18,19ab,28,29)","nGST(13,14,15,16)"))%>%
+  group_by(AREA,YEAR,DISPOSITION)%>%
+  summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+ggplot(gg.totalbydisbyarea.msf,aes(x=YEAR,y=total,fill=DISPOSITION))+
+  geom_col()+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
+  theme_bw()+
+  facet_grid(AREA~.,scale="free_y",switch="y")+
+  labs(x="Year",y="Number of Chinook",fill="")+
+  geom_text(aes(label = total), position=position_stack(vjust=.5), colour = "black",size=2,angle=0)+
+  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0,size=6))
+
+#ggsave("figures/chinook total by disposition by area msf filter.png",height=8,width=8,dpi=600)
+```
+
+\newpage
+
+```{r effort by area month,echo=FALSE,message=FALSE,warning=FALSE,fig.height=10,fig.width=8,fig.cap="Chinook directed effort by area and month (2014-2020)"}
+
+gg.effortbyarea<-gg.effort.prep%>%
+  group_by(area=LRG_AREA_NME,YEAR,Month)%>%
+  summarise(effort=sum(TRIPS,na.rm=TRUE))
+
+ggplot(gg.effortbyarea,aes(x=YEAR,y=effort,fill=Month))+
+  #geom_line()+geom_point()+
+  geom_col(position=position_dodge(preserve="single"))+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  theme(legend.position = "bottom")+
+  facet_wrap(~area,ncol=2)+
+  labs(x="Year",y="Effort (trips)",color="")
+
+```
+
+\newpage
+
+```{r total by disposition stacked by area,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Kept, released and released sub-legal by area. Total column height is encounters."}
+
+gg.totalbydisbyarea<-gg.prep%>%
+  group_by(AREA,YEAR,DISPOSITION)%>%
+  summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+#ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,fill=DISPOSITION))+
+ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,color=DISPOSITION))+
+  #geom_col()+
+  geom_point()+geom_line()+
+  #scale_fill_brewer(palette="Set1")+
+  scale_color_brewer(palette="Set1")+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
+  theme_bw()+
+  facet_grid(AREA~DISPOSITION,scale="free_y",switch="y")+
+  labs(x="Year",y="Chinook",fill="")+
+#  geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=1)+
+  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0),axis.text.x = element_text(angle=90))
+
+#ggsave("figures/chinook total by disposition by area totals.png",height=10,width=8,dpi=600)
+#data%>%distinct(`Area Grouping`)
+
+```
+
+\newpage
+
+```{r total encounters by area,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Total encounters by area 2011-2021. Lines fit by LOESS."}
+gg.encountersbyarea<-gg.prep%>%
+  group_by(AREA,YEAR)%>%
+  summarise(total=sum(ESTIMATE,na.rm=TRUE))
+
+ggplot(gg.encountersbyarea,aes(x=YEAR,y=total))+
+  geom_point()+geom_line()+
+  #scale_fill_brewer(palette="Set1")+
+  #scale_x_continuous(labels=as.character(years),breaks=years)+
+  theme_bw()+
+  geom_smooth()+
+  facet_wrap(~AREA,scale="free_y",ncol=3)+
+  labs(x="Year",y="Encounters")
+
+#ggsave("figures/chinook total by disposition by area totals.png",height=10,width=8,dpi=600)
+#data%>%distinct(`Area Grouping`)
+```
+
+\newpage
+
+```{r total enucounters by area base versus recent simple, echo=FALSE,message=FALSE,warning=FALSE,fig.height=5,fig.width=8,fig.cap="Percent change in encounters between base period (2011-2019) and 2019-2021."}
+
+gg.encountersbaseversusrecentsimple<-gg.encountersbyarea%>%
+  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2021"))%>%
+  group_by(AREA,period)%>%
+  summarise(u=mean(total))%>%
+  pivot_wider(names_from="period",values_from="u")%>%
+  mutate(pchange=`2019-2021`/`2011-2018`-1)%>%
+  select(AREA,pchange)%>%
+  merge(area.region.merge)%>%
+  mutate(factor(region,levels=c("WCVI","SOG/ECVI","JDF")))
+
+ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pchange,fill=region))+
+  geom_col()+
+  theme_bw()+
+  #facet_grid(. ~ region, space="free",scale="free")+ 
+  labs(y="Percent Chnage in Encounters",x="Period")+
+  scale_fill_brewer(palette="Set1")+
+  theme(axis.text.x=element_text(angle=90))
+
+```
+
+\newpage
+
+```{r total enucounters by area base versus recent,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Boxplot of total encounters in base period (2011-2018) versus recent years (2019-2021)."}
+gg.encountersbaseversusrecent<-gg.encountersbyarea%>%
+  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2021"))
+
+ggplot(gg.encountersbaseversusrecent,aes(x=period,y=total,fill=period))+
+  geom_boxplot(notch=FALSE)+
+  scale_fill_brewer(palette="Set1")+
+  facet_wrap(~AREA,scale="free_y",ncol=3)+
+  theme_bw()+
+  labs(y="Encounters",x="Period")+
+  guides(fill="none")
+```
+
+\newpage
+
+# 2022 Creel Survey Summary
+
+```{r 2022 creel survey summary,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."}
+
+
+d22.effort<-d22.long%>%filter(disposition=="effort")
+
+e22.1<-ggplot(d22.effort,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Effort",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.effort.pchange<-d22.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+e22.2<-ggplot(d22.effort.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Effort (2022 versus 5-yr average)")
+```
+
+
+```{r 2022 creel survey summary output effort,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total effort by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total effort (2022 YTD versus 5-yr average)."}
+
+e22.1/e22.2
+
+```
+
+
+```{r 2022 creel survey summary kept,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap=")."}
+d22.kept<-d22.long%>%filter(disposition=="kept")
+
+c22.1<-ggplot(d22.kept,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Kept Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.kept.pchange<-d22.kept%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+c22.2<-ggplot(d22.kept.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Kept Catch\n(2022 versus 5-yr average)")
+```
+
+
+```{r 2022 creel survey summary output kept,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total kept catch of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total kept catch (2022 YTD versus 5-yr average)."}
+
+c22.1/c22.2
+
+```
+
+
+```{r 2022 creel survey summary release,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap=")."}
+d22.rel<-d22.long%>%filter(disposition=="released")
+
+r22.1<-ggplot(d22.rel,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Released Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.rel.pchange<-d22.rel%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+r22.2<-ggplot(d22.rel.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Released Catch\n(2022 versus 5-yr average)")
+```
+
+
+```{r 2022 creel survey summary output released,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total released catch of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total released catch (2022 YTD versus 5-yr average)."}
+
+r22.1/r22.2
+
+```
+
+
+```{r 2022 creel survey summary encounters,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap=")."}
+d22.enc<-d22.long%>%filter(disposition=="encounters")
+
+enc22.1<-ggplot(d22.enc,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Total Encounters of Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d22.enc.pchange<-d22.enc%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+enc22.2<-ggplot(d22.enc.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Total Encounters\n(2022 versus 5-yr average)")
+```
+
+
+```{r 2022 creel survey summary output encounters,echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."}
+enc22.1/enc22.2
+```
+
+
+```{r 2022 creel survey summary per SE, echo=FALSE,message=FALSE,warning=FALSE,fig.height=9,fig.width=8,fig.cap="Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."}
+perse2<-perse%>%
+  mutate(use=case_when(perse<=25~"relatively certain",
+                       perse>=25&perse<=50~"use with caution",
+                       perse>50~"high uncertainty"))
+
+ggplot(perse2,aes(x=area2,y=perse,fill=factor(use,levels=c("relatively certain","use with caution","high uncertainty"))))+
+         geom_col()+theme_bw()+
+         facet_grid(disposition~region,space="free",switch="x",scale="free_x",labeller = labeller(region = label_wrap_gen(10)))+
+  scale_fill_manual(values=c("dark green","orange","firebrick"))+
+  labs(x="Area",y="Percent or Relative Standard Error",fill="")+
+  theme(legend.position = "bottom")
+
+ggsave("outputs/chinook percent standard error 2022 creel survey.png",dpi=600,height=6,width=7)
+
+```
+
+
