@@ -1,0 +1,23 @@
+project: 
+  type: website
+  output-dir: docs
+
+website: 
+  sidebar: 
+    style: "docked"
+    search: true
+    contents:
+      - text: "SBC Chinook Recreational Catch and Release Summary"
+        href: sbc-chinook-rec-catch-and-release-data-summary.qmd
+        
+repo-url: https://github.com/Coastland-Research/south-coast-recreational-fisheries-catch-summaries.git
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-location: left
+
+editor: visual
+  
