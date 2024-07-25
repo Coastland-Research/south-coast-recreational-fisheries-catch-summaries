@@ -1,6 +1,12 @@
 project: 
   type: website
   output-dir: docs
+  render: 
+    - "*.qmd"    
+    - "!sbc chinook rec catch and release data summary.Rmd"
+    - "!SBC-chinook-2023.Rmd"
+    - "!chinook rec catch.Rmd"
+    - "!creel data summary.Rmd"
 
 website: 
   sidebar: 
