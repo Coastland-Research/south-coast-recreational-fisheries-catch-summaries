@@ -41,9 +41,9 @@ require(readxl)
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/catch and release data june 2024 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/catch and release data june 2024 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -83,7 +83,7 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 #| message: false
 #| warning: false
 
-d22<-read_excel("data/catch and release data june 2024 version.xlsx",sheet="2024 june creel survey totals")
+d22<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="2024 july creel survey totals")
 
 d22.long<-d22%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
@@ -95,7 +95,7 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse<-read_excel("data/catch and release data june 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
+perse<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -518,7 +518,7 @@ e22.1<-ggplot(d22.effort,aes(x=area2,y=estimate,fill=year))+
   theme(legend.position="bottom")
 
 d22.effort.pchange<-d22.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
-  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  mutate(pchange=(`2024`-`5-yr`)/`5-yr`*100)%>%
   select(area2,region,disposition,pchange)
 
 e22.2<-ggplot(d22.effort.pchange,aes(x=area2,y=pchange))+
@@ -527,7 +527,7 @@ e22.2<-ggplot(d22.effort.pchange,aes(x=area2,y=pchange))+
   theme_bw()+
   geom_hline(yintercept=0)+
   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Percent Change in Effort (2022 versus 5-yr average)")
+  labs(x="Area",y="Percent Change in Effort (2024 versus 5-yr average)")
 ```
 
 ```{r 2022 creel survey summary output effort}
@@ -563,7 +563,7 @@ c22.1<-ggplot(d22.kept,aes(x=area2,y=estimate,fill=year))+
   theme(legend.position="bottom")
 
 d22.kept.pchange<-d22.kept%>%pivot_wider(names_from="year",values_from="estimate")%>%
-  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  mutate(pchange=(`2024`-`5-yr`)/`5-yr`*100)%>%
   select(area2,region,disposition,pchange)
 
 c22.2<-ggplot(d22.kept.pchange,aes(x=area2,y=pchange))+
@@ -572,7 +572,7 @@ c22.2<-ggplot(d22.kept.pchange,aes(x=area2,y=pchange))+
   theme_bw()+
   geom_hline(yintercept=0)+
   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Percent Change in Kept Catch\n(2022 versus 5-yr average)")
+  labs(x="Area",y="Percent Change in Kept Catch\n(2024 versus 5-yr average)")
 ```
 
 ```{r 2022 creel survey summary output kept}
@@ -608,7 +608,7 @@ r22.1<-ggplot(d22.rel,aes(x=area2,y=estimate,fill=year))+
   theme(legend.position="bottom")
 
 d22.rel.pchange<-d22.rel%>%pivot_wider(names_from="year",values_from="estimate")%>%
-  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  mutate(pchange=(`2024`-`5-yr`)/`5-yr`*100)%>%
   select(area2,region,disposition,pchange)
 
 r22.2<-ggplot(d22.rel.pchange,aes(x=area2,y=pchange))+
@@ -617,7 +617,7 @@ r22.2<-ggplot(d22.rel.pchange,aes(x=area2,y=pchange))+
   theme_bw()+
   geom_hline(yintercept=0)+
   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Percent Change in Released Catch\n(2022 versus 5-yr average)")
+  labs(x="Area",y="Percent Change in Released Catch\n(2024 versus 5-yr average)")
 ```
 
 ```{r 2022 creel survey summary output released}
@@ -653,7 +653,7 @@ enc22.1<-ggplot(d22.enc,aes(x=area2,y=estimate,fill=year))+
   theme(legend.position="bottom")
 
 d22.enc.pchange<-d22.enc%>%pivot_wider(names_from="year",values_from="estimate")%>%
-  mutate(pchange=(`2022`-`5-yr`)/`5-yr`*100)%>%
+  mutate(pchange=(`2024`-`5-yr`)/`5-yr`*100)%>%
   select(area2,region,disposition,pchange)
 
 enc22.2<-ggplot(d22.enc.pchange,aes(x=area2,y=pchange))+
@@ -662,7 +662,7 @@ enc22.2<-ggplot(d22.enc.pchange,aes(x=area2,y=pchange))+
   theme_bw()+
   geom_hline(yintercept=0)+
   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Percent Change in Total Encounters\n(2022 versus 5-yr average)")
+  labs(x="Area",y="Percent Change in Total Encounters\n(2024 versus 5-yr average)")
 ```
 
 ```{r 2022 creel survey summary output encounters}
@@ -684,7 +684,7 @@ enc22.1/enc22.2
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2024 YTD versus 5-yr average)."
 
 perse2<-perse%>%
   mutate(use=case_when(perse<=25~"relatively certain",
@@ -698,6 +698,6 @@ ggplot(perse2,aes(x=area2,y=perse,fill=factor(use,levels=c("relatively certain",
   labs(x="Area",y="Percent or Relative Standard Error",fill="")+
   theme(legend.position = "bottom")
 
-ggsave("outputs/chinook percent standard error 2022 creel survey.png",dpi=600,height=6,width=7)
+ggsave("outputs/chinook percent standard error 2024 creel survey.png",dpi=600,height=6,width=7)
 
 ```
