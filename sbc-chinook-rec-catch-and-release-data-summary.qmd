@@ -41,9 +41,9 @@ require(readxl)
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -78,24 +78,24 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 
 ```
 
-```{r 2022 data read and prep}
+```{r 2024 data read and prep}
 #| echo: false
 #| message: false
 #| warning: false
 
-d22<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="2024 july creel survey totals")
+d22<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2024 aug creel survey totals")
 
 d22.long<-d22%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
   mutate(area2=factor(area))
 ```
 
-```{r 2022 per SE data read}
+```{r 2024 per SE data read}
 #| echo: false
 #| message: false
 #| warning: false
 
-perse<-read_excel("data/catch and release data july 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
+perse<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -127,10 +127,10 @@ gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 
 \newpage
 
-# Effort Data Including 2024
+# Effort Data Including 2022
 
 -   data from DFO
--   2002-2024 by month by year by PFMA by management (ISBM versus AABM)
+-   2002-2022 by month by year by PFMA by management (ISBM versus AABM)
 -   effort is total boat trips
 -   unclear whether this is Chinook directed or total recreational effort (including other species etc.)
 
@@ -495,16 +495,16 @@ ggplot(gg.encountersbaseversusrecent,aes(x=period,y=total,fill=period))+
 
 \newpage
 
-# 2022 Creel Survey Summary
+# 2024 Creel Survey Summary
 
-```{r 2022 creel survey summary}
-#| label: fig-2022-creel-survey-summary
+```{r 2024 creel survey summary}
+#| label: fig-2024-creel-survey-summary
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2024 YTD versus 5-yr average)."
 
 
 d22.effort<-d22.long%>%filter(disposition=="effort")
@@ -530,21 +530,21 @@ e22.2<-ggplot(d22.effort.pchange,aes(x=area2,y=pchange))+
   labs(x="Area",y="Percent Change in Effort (2024 versus 5-yr average)")
 ```
 
-```{r 2022 creel survey summary output effort}
-#| label: fig-2022-creel-survey-summary-output-effort
+```{r 2024 creel survey summary output effort}
+#| label: fig-2024-creel-survey-summary-output-effort
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total effort by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total effort (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total effort by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total effort (2024 YTD versus 5-yr average)."
 
 e22.1/e22.2
 
 ```
 
-```{r 2022 creel survey summary kept}
-#| label: fig-2022-creel-summary-kept
+```{r 2024 creel survey summary kept}
+#| label: fig-2024-creel-summary-kept
 #| echo: false
 #| message: false
 #| warning: false
@@ -575,21 +575,21 @@ c22.2<-ggplot(d22.kept.pchange,aes(x=area2,y=pchange))+
   labs(x="Area",y="Percent Change in Kept Catch\n(2024 versus 5-yr average)")
 ```
 
-```{r 2022 creel survey summary output kept}
-#| label: fig-2022-creel-summary-output-kept
+```{r 2024 creel survey summary output kept}
+#| label: fig-2024-creel-summary-output-kept
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total kept catch of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total kept catch (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total kept catch of Chinook by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total kept catch (2024 YTD versus 5-yr average)."
 
 c22.1/c22.2
 
 ```
 
-```{r 2022 creel survey summary release}
-#| label: fig-2022-creel-summary-release
+```{r 2024 creel survey summary release}
+#| label: fig-2024-creel-summary-release
 #| echo: false
 #| message: false
 #| warning: false
@@ -620,21 +620,21 @@ r22.2<-ggplot(d22.rel.pchange,aes(x=area2,y=pchange))+
   labs(x="Area",y="Percent Change in Released Catch\n(2024 versus 5-yr average)")
 ```
 
-```{r 2022 creel survey summary output released}
-#| label: fig-2022-creel-summary-output-released
+```{r 2024 creel survey summary output released}
+#| label: fig-2024-creel-summary-output-released
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total released catch of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total released catch (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total released catch of Chinook by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total released catch (2024 YTD versus 5-yr average)."
 
 r22.1/r22.2
 
 ```
 
-```{r 2022 creel survey summary encounters}
-#| label: fig-2022-creel-summary-encounters
+```{r 2024 creel survey summary encounters}
+#| label: fig-2024-creel-summary-encounters
 #| echo: false
 #| message: false
 #| warning: false
@@ -665,20 +665,20 @@ enc22.2<-ggplot(d22.enc.pchange,aes(x=area2,y=pchange))+
   labs(x="Area",y="Percent Change in Total Encounters\n(2024 versus 5-yr average)")
 ```
 
-```{r 2022 creel survey summary output encounters}
-#| label: fig-2022-creel-summary-output-encounters
+```{r 2024 creel survey summary output encounters}
+#| label: fig-2024-creel-summary-output-encounters
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2022 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2022 YTD versus 5-yr average)."
+#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2024 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2024 YTD versus 5-yr average)."
 
 enc22.1/enc22.2
 ```
 
-```{r 2022 creel survey summary per SE}
-#| label: fig-2022-creel-summary-perSE
+```{r 2024 creel survey summary per SE}
+#| label: fig-2024-creel-summary-perSE
 #| echo: false
 #| message: false
 #| warning: false
