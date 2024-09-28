@@ -83,10 +83,10 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 #| message: false
 #| warning: false
 
-d22<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2024 aug creel survey totals")
+d22<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2024 all months")
 
 d22.long<-d22%>%mutate(encounters=kept+released)%>%
-pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
   mutate(area2=factor(area))
 ```
 
@@ -340,7 +340,9 @@ ggsave("outputs/chinook percent standard error 2024 creel survey.png",dpi=600,he
 #| message: false
 #| warning: false
 
-
+d22.long %>%
+  ggplot(aes(x = area2, y = estimate, fill = month)) +
+  geom_col()
 ```
 
 
