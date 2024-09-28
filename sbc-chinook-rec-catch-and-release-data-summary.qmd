@@ -334,6 +334,16 @@ ggsave("outputs/chinook percent standard error 2024 creel survey.png",dpi=600,he
 
 ```
 
+```{r 2024 creel survey summary stat areas}
+#| label: fig-2024-creel-summary-stats
+#| echo: false
+#| message: false
+#| warning: false
+
+
+```
+
+
 # Effort Data Including 2022
 
 -   data from DFO
