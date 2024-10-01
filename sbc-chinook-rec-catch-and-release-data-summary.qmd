@@ -368,7 +368,28 @@ raw.bymonth %>%
 ```
 
 # 2023 Creel Survey Summary 
-*needs to be edited to read 2023 data!
+
+```{r 2023 data read and prep}
+#| echo: false
+#| message: false
+#| warning: false
+
+d22<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2023 sept creel survey totals")
+
+d22.long<-d22%>%mutate(encounters=kept+released)%>%
+pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+  mutate(area2=factor(area))
+```
+
+```{r 2023 per SE data read}
+#| echo: false
+#| message: false
+#| warning: false
+
+perse<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
+
+```
+
 
 ```{r 2023 creel survey summary}
 #| label: fig-2023-creel-survey-summary
