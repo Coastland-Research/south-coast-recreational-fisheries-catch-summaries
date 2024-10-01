@@ -345,7 +345,6 @@ d22.long %>%
   geom_col()
 ```
 
-
 # Effort Data Including 2022
 
 -   data from DFO
@@ -493,7 +492,6 @@ e1<-ggplot(gg.efforttotal,aes(x=YEAR,y=total,fill=factor(Month)))+
 
 ggarrange(c1,e1,ncol=1)
 ```
-
 
 \newpage
 
@@ -710,4 +708,3 @@ ggplot(gg.effortbyarea,aes(x=YEAR,y=total))+
 
 ggsave("figures/chinook directed effort by area.png",height=8,width=5,dpi=600)
 ```
-
