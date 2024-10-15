@@ -1,6 +1,5 @@
 ---
 title: "SBC Chinook Catch and Release Summary"
-subtitle: "2011-2021"
 format: html
 editor: visual
 editor_options:
@@ -51,7 +50,7 @@ effort<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="e
 #| message: false
 #| warning: false 
 
-new.effort.data<-fread("data/South_Coast_Recreational_effort_2012-2022.csv")
+new.effort.data<-fread("data/South_Coast_Recreational_effort_2012-2023.csv")
 #names(new.effort.data)
 
 new.effort.area.merge<-fread(("data/pfma to area groupings merge.csv"))
@@ -107,7 +106,7 @@ perse<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="pe
 gg.prep<-data%>%
   select(PFMA,CREEL_SUB_AREA,YEAR,MONTH,DISPOSITION,ADIPOSE_MARK,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR,AREA=`Area Grouping`)
 
-years=seq(2011,2021,1)
+years=seq(2011,2023,1)
 
 area.region.merge=data.frame(AREA=c("Alberni (23A,B)","Barkley (23C-Q)","Clayquot","Kyuquot",
                                     "Nitinat","Nootka/Esp","Quatsino",
@@ -833,7 +832,7 @@ gg.efforttotal<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
 e1<-ggplot(gg.efforttotal,aes(x=YEAR,y=total,fill=factor(Month)))+
   geom_col()+
   theme_bw()+
-  scale_x_continuous(labels=as.character(seq(2014,2020,1)),breaks=seq(2014,2020,1))+
+  scale_x_continuous(labels=as.character(seq(2014,2023,1)),breaks=seq(2014,2023,1))+
   scale_fill_brewer(palette="Set1")+
   labs(x="Year",y="Total Chinook Effort (trips)",fill="")+
   geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=3)+
@@ -916,7 +915,7 @@ ggplot(gg.totalbydisbyarea.msf,aes(x=YEAR,y=total,fill=DISPOSITION))+
 #| warning: false
 #| fig-height: 10
 #| fig-width: 8
-#| fig-cap: "Chinook directed effort by area and month (2014-2020)"
+#| fig-cap: "Chinook directed effort by area and month (2014-2023)"
 
 gg.effortbyarea<-gg.effort.prep%>%
   group_by(area=LRG_AREA_NME,YEAR,Month)%>%
@@ -975,7 +974,7 @@ ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,color=DISPOSITION))+
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Total encounters by area 2011-2021. Lines fit by LOESS."
+#| fig-cap: "Total encounters by area 2011-2023. Lines fit by LOESS."
 gg.encountersbyarea<-gg.prep%>%
   group_by(AREA,YEAR)%>%
   summarise(total=sum(ESTIMATE,na.rm=TRUE))
@@ -1002,14 +1001,14 @@ ggplot(gg.encountersbyarea,aes(x=YEAR,y=total))+
 #| warning: false
 #| fig-height: 5
 #| fig-width: 8
-#| fig-cap: "Percent change in encounters between base period (2011-2019) and 2019-2021."
+#| fig-cap: "Percent change in encounters between base period (2011-2018) and 2019-2023."
 
 gg.encountersbaseversusrecentsimple<-gg.encountersbyarea%>%
-  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2021"))%>%
+  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2023"))%>%
   group_by(AREA,period)%>%
   summarise(u=mean(total))%>%
   pivot_wider(names_from="period",values_from="u")%>%
-  mutate(pchange=`2019-2021`/`2011-2018`-1)%>%
+  mutate(pchange=`2019-2023`/`2011-2018`-1)%>%
   select(AREA,pchange)%>%
   merge(area.region.merge)%>%
   mutate(factor(region,levels=c("WCVI","SOG/ECVI","JDF")))
@@ -1018,7 +1017,7 @@ ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pcha
   geom_col()+
   theme_bw()+
   #facet_grid(. ~ region, space="free",scale="free")+ 
-  labs(y="Percent Chnage in Encounters",x="Period")+
+  labs(y="Percent Change in Encounters",x="Period")+
   scale_fill_brewer(palette="Set1")+
   theme(axis.text.x=element_text(angle=90))
 
@@ -1033,10 +1032,10 @@ ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pcha
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Boxplot of total encounters in base period (2011-2018) versus recent years (2019-2021)."
+#| fig-cap: "Boxplot of total encounters in base period (2011-2018) versus recent years (2019-2023)."
 
 gg.encountersbaseversusrecent<-gg.encountersbyarea%>%
-  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2021"))
+  mutate(period=ifelse(YEAR<2019,"2011-2018","2019-2023"))
 
 ggplot(gg.encountersbaseversusrecent,aes(x=period,y=total,fill=period))+
   geom_boxplot(notch=FALSE)+
@@ -1053,7 +1052,7 @@ ggplot(gg.encountersbaseversusrecent,aes(x=period,y=total,fill=period))+
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-cap: "Total Chinook directed effort based on data provided by DFO Stock Assessment (2014-2020)"
+#| fig-cap: "Total Chinook directed effort based on data provided by DFO Stock Assessment (2014-2023)"
 
 gg.effortbyarea<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
   group_by(LRG_AREA_NME,YEAR)%>%
