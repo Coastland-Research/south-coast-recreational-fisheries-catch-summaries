@@ -10,7 +10,7 @@ editor_options:
 ## Data Sources
 
 -   2010-2021 effort, catch and released numbers are based on DFO provided data
--   2024 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from June 2024
+-   2024 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from September 2024
 
 ## Notes
 
@@ -41,9 +41,9 @@ require(readxl)
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -83,7 +83,7 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 #| message: false
 #| warning: false
 
-d22<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2024 aug creel survey totals")
+d22<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="2024 sept creel survey totals")
 
 d22.long<-d22%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
@@ -95,7 +95,7 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
+perse<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -340,9 +340,9 @@ ggsave("outputs/chinook percent standard error 2024 creel survey.png",dpi=600,he
 #| message: false
 #| warning: false
 
-raw.bymonth <- read_excel("data/catch and release data aug 2024 version.xlsx", sheet = "2024 all months") %>%
+raw.bymonth <- read_excel("data/catch and release data sept 2024 version.xlsx", sheet = "2024 all months") %>%
   mutate(encounters=kept+released) %>%
-  mutate(month = factor(month, levels = c("June", "July", "August"))) %>%
+  mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
   pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
   mutate(area=factor(area))
 ```
@@ -412,7 +412,7 @@ raw.bymonth %>%
 #| message: false
 #| warning: false
 
-d23<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="2023 sept creel survey totals")
+d23<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="2023 sept creel survey totals")
 
 d23.long<-d23%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
@@ -424,7 +424,7 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse23<-read_excel("data/catch and release data aug 2024 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
+perse23<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -640,7 +640,7 @@ ggsave("outputs/chinook percent standard error 2023 creel survey.png",dpi=600,he
 #| message: false
 #| warning: false
 
-raw.bymonth <- read_excel("data/catch and release data aug 2024 version.xlsx", sheet = "2023 all months") %>%
+raw.bymonth <- read_excel("data/catch and release data sept 2024 version.xlsx", sheet = "2023 all months") %>%
   mutate(encounters=kept+released) %>%
   mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
   pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
