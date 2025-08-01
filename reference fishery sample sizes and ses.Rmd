@@ -1,0 +1,56 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r}
+library(tidyverse)
+data<-data.frame(marked=seq(1,200,1),unmarked=seq(200,1,-1))%>%
+  mutate(total=rowSums(across(c(marked,unmarked))),
+         p=marked/total,
+         se=sqrt(p*(1-p)/total),
+         lowci=p-se*1.96,
+         highci=p+se*1.96,
+         "%SE"=se/p)
+
+plot1<-data%>%select(marked,p,lowci,highci)%>%
+  pivot_longer(p:highci,names_to="estimate",values_to="number")
+  
+ggplot(plots,aes(x=marked,y=number,color=estimate))+
+  geom_line()+
+  labs(title="sample of 201")
+
+x=data$marked
+y=data$p
+lowci=data$lowci
+highci=data$highci
+
+png("200 marked fish sample and ses.png",height=600,width=700,units='px')
+par(mfrow=c(1,2))
+
+plot(x,y,type="l",xlab="# of Marked Fish",ylab="Proportion Marked")
+lines(x,lowci,type="l",lty="dotted")
+lines(x,highci,data$highci,type="l",lty="dotted")
+polygon(c(x,rev(x)),c(lowci,rev(highci)),col=rgb(0,0,1,.25))
+
+plot2<-data%>%select(marked,"%SE")
+plot(data$marked,data$"%SE",type='l',xlab="# of Marked Fish",ylab="% SE")
+
+dev.off()
+```
