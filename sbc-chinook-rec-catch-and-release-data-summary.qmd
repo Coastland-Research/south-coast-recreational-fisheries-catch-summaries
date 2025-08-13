@@ -9,7 +9,7 @@ editor_options:
 ## Data Sources
 
 -   2010-2021 effort, catch and released numbers are based on DFO provided data
--   2024 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from September 2024
+-   2025 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from June 2025
 
 ## Notes
 
@@ -35,14 +35,15 @@ library(dplyr)
 require(readxl)
 ```
 
+
 ```{r data read}
 #| echo: false
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -50,10 +51,10 @@ effort<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="e
 #| message: false
 #| warning: false 
 
-new.effort.data<-fread("data/South_Coast_Recreational_effort_2012-2023.csv")
+new.effort.data<-fread("data/common/South_Coast_Recreational_effort_2012-2023.csv")
 #names(new.effort.data)
 
-new.effort.area.merge<-fread(("data/pfma to area groupings merge.csv"))
+new.effort.area.merge<-fread(("data/common/pfma to area groupings merge.csv"))
 
 e22.prep<-new.effort.data%>%
   select(PFMA,YEAR,MONTH,MANAGEMENT,ESTIMATE,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR)
@@ -77,12 +78,33 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 
 ```
 
+```{r 2025 data read and prep}
+#| echo: false
+#| message: false
+#| warning: false
+
+d25<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="2025 june creel survey totals")
+
+d25.long<-d25%>%mutate(encounters=kept+released)%>%
+pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+  mutate(area2=factor(area))
+```
+
+```{r 2025 per SE data read}
+#| echo: false
+#| message: false
+#| warning: false
+
+perse25<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="percent SE 2025 creel summary")%>%mutate(area2=factor(area))
+
+```
+
 ```{r 2024 data read and prep}
 #| echo: false
 #| message: false
 #| warning: false
 
-d22<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="2024 sept creel survey totals")
+d22<-read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx",sheet="2024 sept creel survey totals")
 
 d22.long<-d22%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
@@ -94,7 +116,7 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
+perse<-read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx",sheet="percent SE 2024 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -125,6 +147,281 @@ gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 ```
 
 \newpage
+# 2025 Creel Survey Summary
+```{r 2025 creel survey summary}
+#| label: fig-2025-creel-survey-summary
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2025 YTD versus 5-yr average)."
+
+d25.effort<-d25.long%>%filter(disposition=="effort")
+
+e25.1<-ggplot(d25.effort,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Effort",fill="Period")+
+  theme(legend.position="bottom")
+
+d25.effort.pchange<-d25.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+e25.2<-ggplot(d25.effort.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Effort (2025 versus 5-yr average)")
+```
+
+```{r 2025 creel survey summary output effort}
+#| label: fig-2025-creel-survey-summary-output-effort
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Top: Total effort by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total effort (2025 YTD versus 5-yr average)."
+
+e25.1/e25.2
+
+```
+
+```{r 2025 creel survey summary kept}
+#| label: fig-2025-creel-summary-kept
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: ")."
+ 
+d25.kept<-d25.long%>%filter(disposition=="kept")
+
+c25.1<-ggplot(d25.kept,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Kept Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d25.kept.pchange<-d25.kept%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+c25.2<-ggplot(d25.kept.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Kept Catch\n(2025 versus 5-yr average)")
+```
+
+```{r 2025 creel survey summary output kept}
+#| label: fig-2025-creel-summary-output-kept
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Top: Total kept catch of Chinook by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total kept catch (2025 YTD versus 5-yr average)."
+
+c25.1/c25.2
+
+```
+
+```{r 2025 creel survey summary release}
+#| label: fig-2025-creel-summary-release
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: ")."
+
+d25.rel<-d25.long%>%filter(disposition=="released")
+
+r25.1<-ggplot(d25.rel,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Released Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d25.rel.pchange<-d25.rel%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+r25.2<-ggplot(d25.rel.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Released Catch\n(2025 versus 5-yr average)")
+```
+
+```{r 2025 creel survey summary output released}
+#| label: fig-2025-creel-summary-output-released
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Top: Total released catch of Chinook by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total released catch (2025 YTD versus 5-yr average)."
+
+r25.1/r25.2
+
+```
+
+```{r 2025 creel survey summary encounters}
+#| label: fig-2025-creel-summary-encounters
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: ")."
+
+d25.enc<-d25.long%>%filter(disposition=="encounters")
+
+enc25.1<-ggplot(d25.enc,aes(x=area2,y=estimate,fill=year))+
+  geom_col(position="dodge")+
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Total Encounters of Chinook",fill="Period")+
+  theme(legend.position="bottom")
+
+d25.enc.pchange<-d25.enc%>%pivot_wider(names_from="year",values_from="estimate")%>%
+  mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
+  select(area2,region,disposition,pchange)
+
+enc25.2<-ggplot(d25.enc.pchange,aes(x=area2,y=pchange))+
+  geom_col(position="dodge")+
+  #scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Percent Change in Total Encounters\n(2025 versus 5-yr average)")
+```
+
+```{r 2025 creel survey summary output encounters}
+#| label: fig-2025-creel-summary-output-encounters
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2025 YTD versus 5-yr average)."
+
+enc25.1/enc25.2
+```
+
+```{r 2025 creel survey summary per SE}
+#| label: fig-2025-creel-summary-perSE
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Percent Standard Error for Chinook total effort, kept catch, and released catch estimates for 2025 year to date, by area and area grouping."
+
+perse2<-perse25%>%
+  mutate(use=case_when(perse<=25~"relatively certain",
+                       perse>=25&perse<=50~"use with caution",
+                       perse>50~"high uncertainty"))
+
+ggplot(perse2,aes(x=area2,y=perse,fill=factor(use,levels=c("relatively certain","use with caution","high uncertainty"))))+
+         geom_col()+theme_bw()+
+         facet_grid(disposition~region,space="free",switch="x",scale="free_x",labeller = labeller(region = label_wrap_gen(10)))+
+  scale_fill_manual(values=c("dark green","orange","firebrick"))+
+  labs(x="Area",y="Percent or Relative Standard Error",fill="")+
+  theme(legend.position = "bottom")
+
+ggsave("outputs/chinook percent standard error 2025 creel survey.png",dpi=600,height=6,width=7)
+
+```
+
+```{r 2025 creel survey summary monthly effort}
+#| label: fig-2025-creel-summary-stats
+#| echo: false
+#| message: false
+#| warning: false
+
+raw.bymonth <- read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx", sheet = "2024 all months") %>%
+  mutate(encounters=kept+released) %>%
+  mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
+  pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
+  mutate(area=factor(area))
+```
+
+```{r 2025 creel survey summary monthly effort}
+#| label: fig-2025-creel-summary-monthlyeff
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Chinook recreational fishing effort estimates by area and month, 2025"
+
+raw.bymonth %>%
+  filter(disposition == "effort") %>%
+  ggplot(aes(x = area, y = estimate, fill = month)) +
+  geom_col() +
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Effort")
+```
+
+```{r 2025 creel survey summary monthly kept}
+#| label: fig-2025-creel-summary-monthlykept
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Chinook kept catches by area and month, 2025"
+
+raw.bymonth %>%
+  filter(disposition == "kept") %>%
+  ggplot(aes(x = area, y = estimate, fill = month)) +
+  geom_col() +
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Number of Chinook") 
+```
+
+```{r 2025 creel survey summary monthly released}
+#| label: fig-2025-creel-summary-monthlyrel
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 8
+#| fig-cap: "Chinook released catches by area and month, 2025"
+
+raw.bymonth %>%
+  filter(disposition == "released") %>%
+  ggplot(aes(x = area, y = estimate, fill = month)) +
+  geom_col() +
+  scale_fill_brewer(palette="Set1")+
+  theme_bw()+
+  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+  labs(x="Area",y="Number of Chinook")
+
+```
 
 # 2024 Creel Survey Summary
 
@@ -339,7 +636,7 @@ ggsave("outputs/chinook percent standard error 2024 creel survey.png",dpi=600,he
 #| message: false
 #| warning: false
 
-raw.bymonth <- read_excel("data/catch and release data sept 2024 version.xlsx", sheet = "2024 all months") %>%
+raw.bymonth <- read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx", sheet = "2024 all months") %>%
   mutate(encounters=kept+released) %>%
   mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
   pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
@@ -411,7 +708,7 @@ raw.bymonth %>%
 #| message: false
 #| warning: false
 
-d23<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="2023 sept creel survey totals")
+d23<-read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx",sheet="2023 sept creel survey totals")
 
 d23.long<-d23%>%mutate(encounters=kept+released)%>%
 pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
@@ -423,7 +720,7 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse23<-read_excel("data/catch and release data sept 2024 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
+perse23<-read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx",sheet="percent SE 2023 creel summary")%>%mutate(area2=factor(area))
 
 ```
 
@@ -639,7 +936,7 @@ ggsave("outputs/chinook percent standard error 2023 creel survey.png",dpi=600,he
 #| message: false
 #| warning: false
 
-raw.bymonth <- read_excel("data/catch and release data sept 2024 version.xlsx", sheet = "2023 all months") %>%
+raw.bymonth <- read_excel("data/2024_archive/catch and release data sept 2024 version.xlsx", sheet = "2023 all months") %>%
   mutate(encounters=kept+released) %>%
   mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
   pivot_longer(c(5:8),names_to="disposition",values_to="estimate")%>%
