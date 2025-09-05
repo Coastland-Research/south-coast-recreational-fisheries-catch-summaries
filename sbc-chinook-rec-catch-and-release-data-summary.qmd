@@ -83,11 +83,20 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 #| message: false
 #| warning: false
 
-d25<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="2025 june creel survey totals")
+# chinook
+d25<-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="2025 creel survey chinook")
 
 d25.long<-d25%>%mutate(encounters=kept+released)%>%
-pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
+pivot_longer(c(5:7),names_to="disposition",values_to="estimate")%>%
   mutate(area2=factor(area))
+
+# coho
+d25_co <-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="2025 creel survey coho")
+
+d25_co.long<-d25_co%>%mutate(encounters=kept+released)%>%
+pivot_longer(c(5:7),names_to="disposition",values_to="estimate")%>%
+  mutate(area2=factor(area))
+
 ```
 
 ```{r 2025 per SE data read}
@@ -95,7 +104,11 @@ pivot_longer(c(4:7),names_to="disposition",values_to="estimate")%>%
 #| message: false
 #| warning: false
 
-perse25<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="percent SE 2025 creel summary")%>%mutate(area2=factor(area))
+# chinook
+perse25<-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="percent SE 2025 chinook")%>% mutate(area2=factor(area))
+
+# coho
+perse25<-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="percent SE 2025 coho")%>% mutate(area2=factor(area))
 
 ```
 
@@ -157,27 +170,52 @@ gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 #| fig-width: 8
 #| fig-cap: "Top: Total encounters of Chinook by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total encounters (2025 YTD versus 5-yr average)."
 
-d25.effort<-d25.long%>%filter(disposition=="effort")
+# d25.effort<-d25.long%>%filter(disposition=="effort")
+# 
+# e25.1<-ggplot(d25.effort,aes(x=area2,y=estimate,fill=year))+
+#   geom_col(position="dodge")+
+#   scale_fill_brewer(palette="Set1")+
+#   theme_bw()+
+#   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+#   labs(x="Area",y="Effort",fill="Period")+
+#   theme(legend.position="bottom")
+# 
+# d25.effort.pchange<-d25.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
+#   mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
+#   select(area2,region,disposition,pchange)
+# 
+# e25.2<-ggplot(d25.effort.pchange,aes(x=area2,y=pchange))+
+#   geom_col(position="dodge")+
+#   #scale_fill_brewer(palette="Set1")+
+#   theme_bw()+
+#   geom_hline(yintercept=0)+
+#   facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
+#   labs(x="Area",y="Percent Change in Effort (2025 versus 5-yr average)")
+d25_25 <- d25.long %>%
+  filter(year == "2025") %>%
+  mutate(month = factor(month, levels = c("June", "July")))
 
-e25.1<-ggplot(d25.effort,aes(x=area2,y=estimate,fill=year))+
-  geom_col(position="dodge")+
-  scale_fill_brewer(palette="Set1")+
-  theme_bw()+
-  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Effort",fill="Period")+
-  theme(legend.position="bottom")
+ggplot(d25_25, aes(x = region, y = estimate)) +
+  geom_col() +
+  theme_bw() +
+  facet_grid(disposition~month) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=0.5)) +
+  ggtitle("2025 Chinook effort and catch estimates by month and region") +
+  labs(x = "Region", y = "Estimate")
 
-d25.effort.pchange<-d25.effort%>%pivot_wider(names_from="year",values_from="estimate")%>%
-  mutate(pchange=(`2025`-`5-yr`)/`5-yr`*100)%>%
-  select(area2,region,disposition,pchange)
+# for coho
+d25_25_co <- d25_co.long %>%
+  filter(year == "2025") %>%
+  mutate(month = factor(month, levels = c("June", "July")))
 
-e25.2<-ggplot(d25.effort.pchange,aes(x=area2,y=pchange))+
-  geom_col(position="dodge")+
-  #scale_fill_brewer(palette="Set1")+
-  theme_bw()+
-  geom_hline(yintercept=0)+
-  facet_grid(.~region,space="free",scale="free",switch="x",labeller = labeller(region = label_wrap_gen(10)))+
-  labs(x="Area",y="Percent Change in Effort (2025 versus 5-yr average)")
+ggplot(d25_25_co, aes(x = region, y = estimate)) +
+  geom_col() +
+  theme_bw() +
+  facet_grid(disposition~month) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=0.5)) +
+  ggtitle("2025 coho effort and catch estimates by month and region") +
+  labs(x = "Region", y = "Estimate")
+
 ```
 
 ```{r 2025 creel survey summary output effort}
