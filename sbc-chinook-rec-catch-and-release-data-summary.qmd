@@ -41,9 +41,9 @@ require(readxl)
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/2025_data/catch and release data june 2025 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/2025_data/catch and release data july 2025 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -195,7 +195,7 @@ d25_25 <- d25.long %>%
   filter(year == "2025") %>%
   mutate(month = factor(month, levels = c("June", "July")))
 
-ggplot(d25_25, aes(x = region, y = estimate)) +
+cnplot_25 <- ggplot(d25_25, aes(x = region, y = estimate)) +
   geom_col() +
   theme_bw() +
   facet_grid(disposition~month) +
@@ -208,7 +208,7 @@ d25_25_co <- d25_co.long %>%
   filter(year == "2025") %>%
   mutate(month = factor(month, levels = c("June", "July")))
 
-ggplot(d25_25_co, aes(x = region, y = estimate)) +
+coplot_25 <- ggplot(d25_25_co, aes(x = region, y = estimate)) +
   geom_col() +
   theme_bw() +
   facet_grid(disposition~month) +
@@ -225,9 +225,9 @@ ggplot(d25_25_co, aes(x = region, y = estimate)) +
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Top: Total effort by area and area grouping for 2025 year to date and the 5-yr average. Bottom: Percentage change in total effort (2025 YTD versus 5-yr average)."
+#| fig-cap: "Total effort, kept catch, and released catch by area and month for 2025 year to date for Chinook (top) and coho (bottom)."
 
-e25.1/e25.2
+cnplot_25/coplot_25
 
 ```
 
