@@ -41,9 +41,9 @@ require(readxl)
 #| message: false
 #| warning: false
 #| 
-data<-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="chinook catch and release")
 
-effort<-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="effort by target species")
 ```
 
 ```{r data read new 2022 effort data}
@@ -84,14 +84,14 @@ e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May",
 #| warning: false
 
 # chinook
-d25<-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="2025 creel survey chinook")
+d25<-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="2025 creel survey chinook")
 
 d25.long<-d25%>%mutate(encounters=kept+released) %>%
 pivot_longer(c(5:7),names_to="disposition",values_to ="estimate") %>%
   mutate(area2=factor(area))
 
 # coho
-d25_co <-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="2025 creel survey coho")
+d25_co <-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="2025 creel survey coho")
 
 d25_co.long<-d25_co%>%mutate(encounters=kept+released) %>%
 pivot_longer(c(5:7),names_to="disposition",values_to="estimate") %>%
@@ -105,10 +105,10 @@ pivot_longer(c(5:7),names_to="disposition",values_to="estimate") %>%
 #| warning: false
 
 # chinook
-perse25<-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="percent SE 2025 chinook")%>% mutate(Area=factor(area))
+perse25<-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="percent SE 2025 chinook")%>% mutate(Area=factor(area))
 
 # coho
-perse25co<-read_excel("data/2025_data/catch and release data september 2025 version.xlsx",sheet="percent SE 2025 coho")%>% mutate(Area=factor(area))
+perse25co<-read_excel("data/2025_archive/catch and release data september 2025 version.xlsx",sheet="percent SE 2025 coho")%>% mutate(Area=factor(area))
 
 ```
 
@@ -311,7 +311,7 @@ ggsave("outputs/coho percent standard error 2025 creel survey.png",dpi=600,heigh
 #| message: false
 #| warning: false
 
-raw.bymonth <- read_excel("data/2025_data/catch and release data september 2025 version.xlsx", sheet = "2025 creel survey chinook") %>%
+raw.bymonth <- read_excel("data/2025_archive/catch and release data september 2025 version.xlsx", sheet = "2025 creel survey chinook") %>%
   filter(year == "2025") %>%
   mutate(encounters=kept+released) %>%
   mutate(month = factor(month, levels = c("June", "July", "August", "September"))) %>%
