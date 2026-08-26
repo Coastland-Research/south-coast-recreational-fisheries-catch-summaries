@@ -1,0 +1,96 @@
+---
+title: "2026 SBC Chinook Recreational Catch and Release Summary"
+format: html
+editor: visual
+editor_options:
+  chunk_output_type: console
+---
+
+## Data Sources
+
+- 2010-xxxx effort, catch and released numbers are based on DFO provided data
+- 2026 versus 5-yr recent average are based on the South Coast Assessment Creel Survey Summary Report from June 2026
+
+## Notes
+
+- sub-legal = smaller than the legal size limit
+- encounters = total number of kept, released-legal, and released sub-legal chinook
+
+```{r load library}
+#| echo: false
+#| message: false
+#| warning: false
+
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+
+options(scipen=1000)
+library(data.table)
+library(tidyverse)
+library(RColorBrewer)
+library(ggpubr)
+library(stringr)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+require(readxl)
+```
+
+```{r data read}
+#| echo: false
+#| message: false
+#| warning: false
+#| 
+data<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="chinook catch and release")
+
+effort<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="effort by target species")
+```
+
+```{r data read new effort data - to 2026 July}
+#| echo: false
+#| message: false
+#| warning: false 
+
+new.effort.data<-fread("data/common/South_Coast_Recreational_effort_2012-2026.csv")
+
+new.effort.area.merge<-fread(("data/common/pfma to area groupings merge.csv"))
+
+e22.prep<-new.effort.data%>%
+  select(PFMA,YEAR,MONTH,MANAGEMENT,ESTIMATE,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR)
+
+e22<-merge(e22.prep,new.effort.area.merge,by="PFMA")%>%
+  mutate(PFMA=factor(PFMA,levels=c("PFMA 11","PFMA 111","PFMA 12",
+                                   "PFMA 13","PFMA 14","PFMA 15",
+                                   "PFMA 16","PFMA 17","PFMA 18",
+                                   "PFMA 19","PFMA 20","PFMA 21",
+                                   "PFMA 22","PFMA 23","PFMA 24",
+                                   "PFMA 25","PFMA 26","PFMA 27",
+                                   "PFMA 121","PFMA 123","PFMA 124",
+                                   "PFMA 125","PFMA 126","PFMA 127",
+                                   "PFMA 28","PFMA 29")))
+years=seq(2012,2026,1)
+
+e22$months=factor(e22$MONTH,levels=c("January","February","March","April","May","June","July","August","September","October","November","December"))
+```
+
+```{r 2026 data read and prep}
+#| echo: false
+#| message: false
+#| warning: false
+
+# chinook
+d26<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="2026 creel survey chinook")
+
+d26.long<-d26%>%mutate(encounters=kept+released) %>%
+pivot_longer(c(5:7),names_to="disposition",values_to ="estimate") %>%
+  mutate(area2=factor(area))
+
+# coho
+d26_co <-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="2026 creel survey coho")
+
+d26_co.long<-d26_co%>%mutate(encounters=kept+released) %>%
+pivot_longer(c(5:7),names_to="disposition",values_to="estimate") %>%
+  mutate(area2=factor(area))
+```
+
+
+
