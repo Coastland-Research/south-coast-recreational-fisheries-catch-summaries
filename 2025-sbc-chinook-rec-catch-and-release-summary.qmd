@@ -50,7 +50,7 @@ effort<-read_excel("data/2025_archive/catch and release data september 2025 vers
 #| message: false
 #| warning: false 
 
-new.effort.data<-fread("data/common/South_Coast_Recreational_effort_2012-2023.csv")
+new.effort.data<-fread("data/common/South_Coast_Recreational_effort_2012-2026.csv")
 #names(new.effort.data)
 
 new.effort.area.merge<-fread(("data/common/pfma to area groupings merge.csv"))
