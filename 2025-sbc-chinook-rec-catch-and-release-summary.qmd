@@ -1467,7 +1467,7 @@ ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pcha
 
 \newpage
 
-```{r total enucounters by area base versus recent}
+```{r total encounters by area base versus recent}
 #| label: fig-encounters-by-area-base-versus-recent
 #| echo: false
 #| message: false

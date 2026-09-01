@@ -109,7 +109,7 @@ area.region.merge=data.frame(AREA=c("Alberni (23A,B)","Barkley (23C-Q)","Clayquo
                                     "Nitinat","Nootka/Esp","Quatsino",
                                     "NWVIoffshore(125,126,127)","SWVIoffshore(121,123,124)",
                                     "JDFeast(19cde,20cd)","JDFwest(Renfrew 20abe)",
-                                    "nGST(13,14,15,16)","nJST(12)","sGST(17,18,19ab,28,29)","upperQCS(11,111)"),
+                           "nGST(13,14,15,16)","nJST(12)","sGST(17,18,19ab,28,29)","upperQCS(11,111)"),
                              region=c("WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI",
                                       "JDF","JDF",
                                       "SOG/ECVI","SOG/ECVI","SOG/ECVI","SOG/ECVI"))
@@ -121,101 +121,142 @@ gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 
 ```
 
-# Effort data INCLUDING 2026
+# NEW FIGURES
 
-- data from DFO
-- 2002-2022 by month by year by PFMA by management (ISBM versus AABM)
-- effort is total boat trips
-- unclear whether this is Chinook directed or total recreational effort (including other species etc.)
+## Chinook
 
-```{r total effort all sbc new data}
-#| label: fig-total-effort-all-sbc-new
+```{r chinook effort area * month}
+#| label: fig-cn-effort
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-height: 4
+#| fig-height: 8
 #| fig-width: 5
-#| fig-cap: "Total effort in number of boat trips for all SBC areas."
+#| fig-cap: "Annual Chinook effort by month and Area grouping, 2002-2026."
 
-e26.tot<-e26%>%group_by(YEAR)%>%summarise(total=sum(ESTIMATE,na.rm=TRUE))
+e26 <- e26 %>%
+  filter(months %in% c("May", "June", "July", "August", "September")) %>%
+  mutate(months = factor(months, levels = c("May", "June", "July", "August", "September"))) %>%
+  group_by(YEAR, `AREA`, months) %>%
+  summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
 
-ggplot(e26.tot,aes(x=YEAR,y=total))+
-  geom_col()+
+ggplot(e26, aes(x = YEAR, y = estimate, fill = months)) +
+  geom_col() +
+  scale_fill_viridis_d()+
+  facet_wrap(~`AREA`) +
+  labs(x = "Year",
+    y = "Estimated effort (boat trips)",
+    title = "Chinook salmon – Effort") +
   theme_bw()+
-  labs(x="Year",y="Total Effort SBC (boat trips)")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 5))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(legend.position = "bottom")
 
 ```
 
-\newpage
-
-```{r total effort all sbc by area by year}
-#| label: fig-total-effort-all-sbc-area-yr
+```{r chinook kept area * month}
+#| label: fig-cn-kept
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-height: 8.5
-#| fig-width: 7
-#| fig-cap: "Total effort in number of boat trips by area for all SBC areas."
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Chinook kept catch by month and Area grouping, 2011-2026."
 
-e26.byarea<-e26%>%group_by(PFMA,YEAR,AREA)%>%summarise(effort=sum(ESTIMATE,na.rm=TRUE))%>%
-  mutate(PFMA=factor(PFMA,levels=c("PFMA 11","PFMA 111","PFMA 12",
-                                   "PFMA 13","PFMA 14","PFMA 15",
-                                   "PFMA 16","PFMA 17","PFMA 18",
-                                   "PFMA 19","PFMA 20","PFMA 21",
-                                   "PFMA 22","PFMA 23","PFMA 24","PFMA 25","PFMA 26","PFMA 27",
-                                   "PFMA 121","PFMA 123","PFMA 124","PFMA 125","PFMA 126","PFMA 127",
-                                   "PFMA 28","PFMA 29")))
+chinook_kept <- data %>%
+  filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Kept") %>%
+  filter(MONTH %in% c("May", "June", "July", "August", "September")) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  group_by(YEAR, `Area Grouping`, MONTH) %>%
+  summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
 
-cols<-brewer.pal(7,"Set1")[c(1:5,7)]
-
-ggplot(e26.byarea,aes(x=YEAR,y=effort,color=AREA))+
-  geom_point()+
-  geom_line()+
+ggplot(chinook_kept, aes(x = YEAR, y = estimate, fill = MONTH)) +
+  geom_col() +
+  scale_fill_viridis_d()+
+  facet_wrap(~`Area Grouping`) +
+  labs(x = "Year",
+    y = "Estimated catch",
+    title = "Chinook salmon – Kept catch") +
   theme_bw()+
-  scale_color_manual(values=cols)+
-  facet_wrap(~PFMA,scale="free_y",ncol=3)+
-  theme(legend.position="bottom")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  labs(x="Year",y="Effort (boat trips)",color="Area")
+  theme(legend.position = "bottom")
 
 ```
 
-\newpage
-
-```{r total effort all sbc by area by year only may-sept}
-#| label: fig-total-effort-may-sept
+```{r chinook released area * month}
+#| label: fig-cn-rel
 #| echo: false
-#| include: false
 #| message: false
 #| warning: false
-#| fig-height: 8.5
-#| fig-width: 7
-#| fig-cap: "Total effort in number of boat trips by area for all SBC areas-ONLY MAY to SEPTEMBER."
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Chinook released catch by month and Area grouping, 2011-2026."
 
-e26.byareaonlysomemonths<-e26%>%filter(MONTH%in%c("May","June","July","August","September"))%>%
-  group_by(PFMA,YEAR,AREA)%>%
-  summarise(effort=sum(ESTIMATE,na.rm=TRUE))
+chinook_rel <- data %>%
+  mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released",
+                                   TRUE~DISPOSITION)) %>%
+  filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Released") %>%
+  filter(MONTH %in% c("May", "June", "July", "August", "September")) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  group_by(YEAR, `Area Grouping`, MONTH) %>%
+  summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
 
-cols<-brewer.pal(7,"Set1")[c(1:5,7)]
-
-ggplot(e26.byarea,aes(x=YEAR,y=effort,color=AREA))+
-  geom_point()+
-  geom_line()+
+ggplot(chinook_kept, aes(x = YEAR, y = estimate, fill = MONTH)) +
+  geom_col() +
+  scale_fill_viridis_d()+
+  facet_wrap(~`Area Grouping`) +
+  labs(x = "Year",
+    y = "Estimated catch",
+    title = "Chinook salmon – Released catch") +
   theme_bw()+
-  scale_color_manual(values=cols)+
-  facet_wrap(~PFMA,scale="free_y",ncol=3)+
-  theme(legend.position="bottom")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  labs(x="Year",y="Effort (boat trips)",color="Area")
+  theme(legend.position = "bottom")
 
 ```
 
-\newpage
 
+## Coho
+```{r coho effort area * month}
+
+
+```
+
+```{r coho kept area * month}
+
+
+```
+
+```{r coho released area * month}
+
+
+```
+
+# Encounters 
+```{r encounters Chinook}
+#| label: fig-cn-encounters
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Chinook total encounters by month and Area grouping, 2011-2026."
+chinook_en <- data %>%
+  filter(MONTH %in% c("May", "June", "July", "August", "September")) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  group_by(YEAR, `Area Grouping`, MONTH) %>%
+  summarise(encounters = sum(ESTIMATE, na.rm = TRUE),
+            .groups = "drop")
+
+ggplot(chinook_en, aes(x = YEAR, y = encounters, fill = MONTH)) +
+  geom_col() +
+  scale_fill_viridis_d()+
+  facet_wrap(~`Area Grouping`) +
+  labs(x = "Year",
+    y = "Estimated total encounters (kept + released)",
+    title = "Chinook salmon – Total encounters") +
+  theme_bw()+
+  theme(legend.position = "bottom")
+```
+
+# Updated figure 18
 ```{r total by disposition all sbc}
 #| label: fig-total-disposition
 #| echo: false
@@ -226,6 +267,7 @@ ggplot(e26.byarea,aes(x=YEAR,y=effort,color=AREA))+
 #| fig-cap: "Total encounters (column height) by disposition (kept, released and released sub-legal) Chinook for all SBC areas."
 
 gg.totalbydis<-gg.prep%>%
+  mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released", TRUE~DISPOSITION)) %>%
   group_by(YEAR,DISPOSITION)%>%
   summarise(total=sum(ESTIMATE,na.rm=TRUE))
 
@@ -234,11 +276,10 @@ c1<-ggplot(gg.totalbydis,aes(x=YEAR,y=total,fill=DISPOSITION))+
   scale_fill_viridis_d()+
   scale_x_continuous(labels=as.character(years),breaks=years)+
   theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   labs(x="Year",y="Chinook",fill="")+
   geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=2)+
-  theme(legend.position="bottom") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+  theme(legend.position="bottom")
 ```
 
 ```{r total effort all sbc}
@@ -257,13 +298,13 @@ gg.efforttotal<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
 e1<-ggplot(gg.efforttotal,aes(x=YEAR,y=total,fill=factor(Month)))+
   geom_col()+
   theme_bw()+
-  scale_x_continuous(labels=as.character(years),breaks=years)+
-  # scale_x_continuous(labels=as.character(seq(2014,2026,1)),breaks=seq(2014,2026,1))+
+  scale_x_continuous(labels=as.character(seq(2014,2026,1)),breaks=seq(2014,2026,1))+
   scale_fill_viridis_d()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   labs(x="Year",y="Total Chinook Effort (trips)",fill="")+
   geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=3)+
-  theme(legend.position="bottom") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(legend.position="bottom")
+
 ```
 
 ```{r total catch release effort all sbc}
@@ -278,33 +319,6 @@ e1<-ggplot(gg.efforttotal,aes(x=YEAR,y=total,fill=factor(Month)))+
 ggarrange(c1,e1,ncol=1)
 ```
 
-
-```{r total across disposition by area}
-#| label: fig-total-across-disp-by-area
-#| echo: false
-#| message: false
-#| warning: false
-#| fig-height: 9
-#| fig-width: 8
-#| fig-cap: "Kept, released and released sub-legal Chinook by area."
-
-gg.totalbydisbyarea<-gg.prep%>%
-  group_by(AREA,YEAR,DISPOSITION)%>%
-  summarise(total=sum(ESTIMATE,na.rm=TRUE))
-
-ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,fill=DISPOSITION))+
-  geom_col()+
-  scale_fill_viridis_d()+
-  scale_x_continuous(labels=as.character(years),breaks=years)+
-  theme_bw()+
-  facet_grid(AREA~DISPOSITION,scale="free_y",switch="y")+
-  labs(x="Year",y="Chinook",fill="")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
- #geom_text(aes(label = total), position=position_stack(vjust=1), colour = "black",size=1,angle=90)+
-  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0,size=6))
-```
-
 ```{r total across disposition by area for just some areas stacked}
 #| label: fig-total-across-disp-stacked
 #| echo: false
@@ -315,6 +329,7 @@ ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,fill=DISPOSITION))+
 #| fig-cap: "Kept, released and released sub-legal Chinook by area for proposed MSF areas in SOG and JDF."
 
 gg.totalbydisbyarea.msf<-gg.prep%>%
+  mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released", TRUE~DISPOSITION)) %>%
   filter(AREA%in%c("JDFeast(19cde,20cd)","JDFwest(Renfrew 20abe)","sGST(17,18,19ab,28,29)","nGST(13,14,15,16)"))%>%
   group_by(AREA,YEAR,DISPOSITION)%>%
   summarise(total=sum(ESTIMATE,na.rm=TRUE))
@@ -322,14 +337,15 @@ gg.totalbydisbyarea.msf<-gg.prep%>%
 ggplot(gg.totalbydisbyarea.msf,aes(x=YEAR,y=total,fill=DISPOSITION))+
   geom_col()+
   scale_fill_viridis_d()+
-  # scale_x_continuous(labels=as.character(years),breaks=years)+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
   theme_bw()+
   facet_grid(AREA~.,scale="free_y",switch="y")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   labs(x="Year",y="Number of Chinook",fill="")+
   geom_text(aes(label = total), position=position_stack(vjust=.5), colour = "black",size=2,angle=0)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   theme(legend.position="bottom",strip.text.y.left=element_text(angle=0,size=6))
+
+#ggsave("figures/chinook total by disposition by area msf filter.png",height=8,width=8,dpi=600)
 ```
 
 \newpage
@@ -348,19 +364,16 @@ gg.effortbyarea<-gg.effort.prep%>%
   summarise(effort=sum(TRIPS,na.rm=TRUE))
 
 ggplot(gg.effortbyarea,aes(x=YEAR,y=effort,fill=Month))+
-  #geom_line()+geom_point()+
   geom_col(position=position_dodge(preserve="single"))+
   scale_fill_viridis_d()+
   theme_bw()+
-  theme(legend.position = "right")+
-  scale_x_continuous(breaks = seq(2002, 2026, by = 4))+
+  scale_x_continuous(labels=as.character(seq(2014,2026,1)),breaks=seq(2014,2026,1))+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  theme(legend.position = "bottom")+
   facet_wrap(~area,ncol=2)+
   labs(x="Year",y="Effort (trips)",color="")
 
 ```
-
-\newpage
 
 ```{r total by disposition stacked by area}
 #| label: fig-total-by-disp-stacked
@@ -372,25 +385,21 @@ ggplot(gg.effortbyarea,aes(x=YEAR,y=effort,fill=Month))+
 #| fig-cap: "Kept, released and released sub-legal by area. Total column height is encounters."
 
 gg.totalbydisbyarea<-gg.prep%>%
+  mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released", TRUE~DISPOSITION)) %>%
   group_by(AREA,YEAR,DISPOSITION)%>%
   summarise(total=sum(ESTIMATE,na.rm=TRUE))
 
 ggplot(gg.totalbydisbyarea,aes(x=YEAR,y=total,color=DISPOSITION))+
-  #geom_col()+
   geom_point()+geom_line()+
   scale_x_continuous(labels=as.character(years),breaks=years)+
   theme_bw()+
   facet_grid(AREA~DISPOSITION,scale="free_y",switch="y")+
   labs(x="Year",y="Chinook",fill="")+
-#  geom_text(aes(label = total), position=position_stack(vjust=0.5), colour = "black",size=1)+
-  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0),axis.text.x = element_text(angle=90)) +
+  theme(legend.position="bottom",strip.text.y.left=element_text(angle=0),
+        axis.text.x = element_text(angle=60, hjust = 1)) +
     scale_fill_viridis_d()
 
-#ggsave("figures/chinook total by disposition by area totals.png",height=10,width=8,dpi=600)
-#data%>%distinct(`Area Grouping`)
 ```
-
-\newpage
 
 ```{r total encounters by area}
 #| label: fig-total-encounters-by-area
@@ -406,18 +415,13 @@ gg.encountersbyarea<-gg.prep%>%
 
 ggplot(gg.encountersbyarea,aes(x=YEAR,y=total))+
   geom_point()+geom_line()+
-  #scale_fill_brewer(palette="Set1")+
-  #scale_x_continuous(labels=as.character(years),breaks=years)+
   theme_bw()+
   geom_smooth()+
+  scale_x_continuous(labels=as.character(years),breaks=years)+
   facet_wrap(~AREA,scale="free_y",ncol=3)+
-  labs(x="Year",y="Encounters")
-
-#ggsave("figures/chinook total by disposition by area totals.png",height=10,width=8,dpi=600)
-#data%>%distinct(`Area Grouping`)
+  labs(x="Year",y="Encounters")+
+  theme(axis.text.x = element_text(angle=60, hjust = 1))
 ```
-
-\newpage
 
 ```{r total encounters by area base versus recent simple}
 #| label: fig-encounters-by-area-base-versus-recent-simple
@@ -428,7 +432,6 @@ ggplot(gg.encountersbyarea,aes(x=YEAR,y=total))+
 #| fig-width: 8
 #| fig-cap: "Percent change in encounters between base period (2011-2021) and 2022-2026."
 
-# ADJUST THESE YEAR RANGES ####
 gg.encountersbaseversusrecentsimple<-gg.encountersbyarea%>%
   mutate(period=ifelse(YEAR<2022,"2011-2021","2022-2026"))%>%
   group_by(AREA,period)%>%
@@ -442,16 +445,13 @@ gg.encountersbaseversusrecentsimple<-gg.encountersbyarea%>%
 ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pchange,fill=region))+
   geom_col()+
   theme_bw()+
-  #facet_grid(. ~ region, space="free",scale="free")+ 
   labs(y="Percent Change in Encounters",x="Period")+
   scale_fill_viridis_d()+
   theme(axis.text.x=element_text(angle=90))
 
 ```
 
-\newpage
-
-```{r total enucounters by area base versus recent}
+```{r total encounters by area base versus recent}
 #| label: fig-encounters-by-area-base-versus-recent
 #| echo: false
 #| message: false
@@ -460,7 +460,6 @@ ggplot(gg.encountersbaseversusrecentsimple,aes(x=fct_reorder(AREA,region),y=pcha
 #| fig-width: 8
 #| fig-cap: "Boxplot of total encounters in base period (2011-2021) versus recent years (2022-2026)."
 
-###### ADJUST YEARS HERE
 gg.encountersbaseversusrecent<-gg.encountersbyarea%>%
   mutate(period=ifelse(YEAR<2022,"2011-2021","2022-2026"))
 
@@ -479,7 +478,7 @@ ggplot(gg.encountersbaseversusrecent,aes(x=period,y=total,fill=period))+
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-cap: "Total Chinook directed effort based on data provided by DFO Stock Assessment (2014-2023)"
+#| fig-cap: "Total Chinook directed effort based on data provided by DFO Stock Assessment (2014-2026)"
 
 gg.effortbyarea<-gg.effort.prep%>%filter(TARGET=="Chinook")%>%
   group_by(LRG_AREA_NME,YEAR)%>%
@@ -492,6 +491,5 @@ ggplot(gg.effortbyarea,aes(x=YEAR,y=total))+
   theme(strip.text.y.left=element_text(angle=0,size=8))+
   labs(x="Year",y="Total Chinook Directed Effort")+
   expand_limits(y=0)
-
-ggsave("figures/chinook directed effort by area.png",height=8,width=5,dpi=600)
 ```
+
