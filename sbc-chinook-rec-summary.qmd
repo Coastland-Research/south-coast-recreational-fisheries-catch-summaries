@@ -45,6 +45,8 @@ data<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",
 
 # updated to 2026
 effort<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="effort by target species")
+
+data_co <- read_excel("data/2026_data/catch and release data july 2026 version.xlsx", sheet = "coho catch and release")
 ```
 
 ```{r data read new effort data - to 2026 July}
@@ -103,7 +105,24 @@ pivot_longer(c(5:7),names_to="disposition",values_to="estimate") %>%
 gg.prep<-data%>%
   select(PFMA,CREEL_SUB_AREA,YEAR,MONTH,DISPOSITION,ADIPOSE_MARK,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR,AREA=`Area Grouping`)
 
+gg.prep.co <- data%>%
+  select(PFMA,YEAR,MONTH,DISPOSITION,ESTIMATE,STANDARD_ERROR,PERCENT_STANDARD_ERROR)
+
 years=seq(2011,2026,1)
+
+area.region.merge=data.frame(AREA=c("Alberni (23A,B)","Barkley (23C-Q)","Clayquot","Kyuquot",
+                                    "Nitinat","Nootka/Esp","Quatsino",
+                                    "NWVIoffshore(125,126,127)","SWVIoffshore(121,123,124)",
+                                    "JDFeast(19cde,20cd)","JDFwest(Renfrew 20abe)",
+                           "nGST(13,14,15,16)","nJST(12)","sGST(17,18,19ab,28,29)","upperQCS(11,111)"),
+                             region=c("WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI","WCVI",
+                                      "JDF","JDF",
+                                      "SOG/ECVI","SOG/ECVI","SOG/ECVI","SOG/ECVI"))
+
+months=factor(c("May","June","July","August","September"),levels=c("May","June","July","August","September"))
+month.merge<-data.frame(MONTH=c(5,6,7,8,9),Month=months)
+
+gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 
 area.region.merge=data.frame(AREA=c("Alberni (23A,B)","Barkley (23C-Q)","Clayquot","Kyuquot",
                                     "Nitinat","Nootka/Esp","Quatsino",
@@ -214,31 +233,6 @@ ggplot(gg.totalbydisbyarea.msf,aes(x=YEAR,y=total,fill=DISPOSITION))+
 ```
 
 \newpage
-
-```{r effort by area month}
-#| label: fig-effort-by-area-month
-#| echo: false
-#| message: false
-#| warning: false
-#| fig-height: 10
-#| fig-width: 8
-#| fig-cap: "Chinook directed effort by area and month (2014-2026)"
-
-# gg.effortbyarea<-gg.effort.prep%>%
-#   group_by(area=LRG_AREA_NME,YEAR,Month)%>%
-#   summarise(effort=sum(TRIPS,na.rm=TRUE))
-# 
-# ggplot(gg.effortbyarea,aes(x=YEAR,y=effort,fill=Month))+
-#   geom_col(position=position_dodge(preserve="single"))+
-#   scale_fill_viridis_d()+
-#   theme_bw()+
-#   scale_x_continuous(labels=as.character(seq(2014,2026,1)),breaks=seq(2014,2026,1))+
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-#   theme(legend.position = "bottom")+
-#   facet_wrap(~area,ncol=2)+
-#   labs(x="Year",y="Effort (trips)",color="")
-
-```
 
 ```{r total by disposition stacked by area}
 #| label: fig-total-by-disp-stacked
@@ -471,7 +465,6 @@ chinook_en <- data %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(encounters = sum(ESTIMATE, na.rm = TRUE), .groups = "drop")
 
-
 ggplot(chinook_en, aes(x = YEAR, y = encounters, fill = YEAR == 2026)) +
   geom_col() +
   scale_fill_manual(
@@ -546,6 +539,112 @@ coplot_26 <- ggplot(d26_coho, aes(x = region, y = estimate, fill = Area)) +
 cnplot_26
 ```
 
+
+```{r coho kept area * month}
+#| label: fig-co-kept
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Coho kept catch by month and Area, 2011-2026."
+
+coho_kept <- data_co %>%
+  filter(SPECIES == "COHO SALMON", DISPOSITION == "kept", YEAR != "5-yr") %>%
+  filter(MONTH %in% c("June", "July")) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  mutate(YEAR = as.numeric(YEAR)) %>%
+  group_by(YEAR, PFMA, MONTH) %>%
+  summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
+
+ggplot(coho_kept, aes(x = YEAR, y = estimate, fill = YEAR == 2026)) +
+  geom_col() +
+  scale_fill_manual(values = c(`FALSE` = "grey50", `TRUE` = "#31688E"),
+    labels = c(`FALSE` = "Previous years", `TRUE` = "2026"), name = NULL) +
+  scale_x_continuous(labels=as.character(seq(2010,2026,1)),
+                     breaks=seq(2010,2026,1))+
+  scale_y_continuous(labels = as.character(seq(0, 12500, 5000)), breaks = seq(0,12500,5000))+
+  facet_grid(PFMA ~ MONTH) +
+  labs(x = "Year", y = "Estimated catch",
+    title = "Coho salmon – Kept catch") +
+  theme_bw() +
+  theme(legend.position = "none")+
+  theme(strip.text.y = element_text(angle = 0))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r coho released area * month}
+#| label: fig-co-rel
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Coho released catch by month and Area, 2011-2026."
+
+coho_rel <- data_co%>%
+  mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released",
+                                   TRUE~DISPOSITION)) %>%
+  filter(SPECIES == "COHO SALMON", DISPOSITION == "released", YEAR != "5-yr") %>%
+  filter(MONTH %in% c("June", "July")) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  mutate(YEAR = as.numeric(YEAR)) %>%
+  group_by(YEAR, PFMA, MONTH) %>%
+  summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
+
+ggplot(coho_rel, aes(x = YEAR, y = estimate, fill = YEAR == 2026)) +
+  geom_col() +
+  scale_fill_manual(
+    values = c(`FALSE` = "grey50", `TRUE` = "#31688E"),
+    labels = c(`FALSE` = "Previous years", `TRUE` = "2026"),
+    name = NULL) +
+  scale_x_continuous(labels=as.character(seq(2010,2026,1)),
+                     breaks=seq(2010,2026,1))+
+  facet_grid(PFMA ~ MONTH) +
+  labs(x = "Year",
+    y = "Estimated catch (released)",
+    title = "Coho salmon – Released catch") +
+  theme_bw() +
+  theme(legend.position = "none")+
+  theme(strip.text.y = element_text(angle = 0))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r encounters Coho}
+#| label: fig-co-encounters
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 8
+#| fig-width: 5
+#| fig-cap: "Annual Coho total encounters by month and Area, 2011-2026."
+
+coho_en <- data_co %>%
+  filter(MONTH %in% c("June", "July"), YEAR != "5-yr") %>%
+  mutate(YEAR = as.numeric(YEAR)) %>%
+  mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
+  group_by(YEAR, PFMA, MONTH) %>%
+  summarise(encounters = sum(ESTIMATE, na.rm = TRUE), .groups = "drop")
+
+ggplot(coho_en, aes(x = YEAR, y = encounters, fill = YEAR == 2026)) +
+  geom_col() +
+  scale_fill_manual(
+    values = c(`FALSE` = "grey50", `TRUE` = "#31688E"),
+    labels = c(`FALSE` = "Previous years", `TRUE` = "2026"),
+    name = NULL) +
+  scale_x_continuous(labels=as.character(seq(2010,2026,1)), breaks=seq(2010,2026,1))+
+  scale_y_continuous(labels = as.character(seq(0, 30000, 15000)), breaks = seq(0, 30000, 15000))+
+  facet_grid(PFMA ~ MONTH) +
+  labs(x = "Year",
+    y = "Estimated encounters",
+    title = "Coho salmon – Total encounters") +
+  theme_bw() +
+  theme(legend.position = "none")+
+  theme(strip.text.y = element_text(angle = 0))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 ## 2026 vs 5yr averages - Coho
 
 ```{r 2026 creel survey summary output co}
@@ -559,23 +658,6 @@ cnplot_26
 
 coplot_26
 ```
-
-```{r coho effort area * month}
-
-
-```
-
-```{r coho kept area * month}
-
-
-```
-
-```{r coho released area * month}
-
-
-```
-
-
 
 # Appendix A
 
