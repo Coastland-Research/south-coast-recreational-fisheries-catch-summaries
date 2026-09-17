@@ -210,7 +210,7 @@ ggarrange(c1,e1,ncol=1)
 #| warning: false
 #| fig-height: 8
 #| fig-width: 8
-#| fig-cap: "Kept, released and released sub-legal Chinook by PFMA."
+#| fig-cap: "Kept and released Chinook salmon by PFMA, 2011-2026 (preliminary). Total column height is encounters."
 
 gg.totalbydisbyarea.msf<-gg.prep%>%
   mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released", TRUE~DISPOSITION)) %>%
@@ -241,7 +241,7 @@ ggplot(gg.totalbydisbyarea.msf,aes(x=YEAR,y=total,fill=DISPOSITION))+
 #| warning: false
 #| fig-height: 9
 #| fig-width: 8
-#| fig-cap: "Kept, released and released sub-legal by area. Total column height is encounters."
+#| fig-cap: "Kept and released Chinook salmon by area, 2011-2026 (preliminary)."
 
 gg.totalbydisbyarea<-gg.prep%>%
   mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released", TRUE~DISPOSITION)) %>%
