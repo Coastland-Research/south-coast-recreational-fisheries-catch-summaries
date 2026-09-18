@@ -3,7 +3,7 @@ project:
   output-dir: docs
   render: 
     - "*.qmd"    
-    - "!sbc chinook rec catch and release data summary.Rmd"
+    - "!2025-sbc-chinook-rec-catch-and-release-summary.qmd"
     - "!SBC-chinook-2023.Rmd"
     - "!chinook rec catch.Rmd"
     - "!creel data summary.Rmd"

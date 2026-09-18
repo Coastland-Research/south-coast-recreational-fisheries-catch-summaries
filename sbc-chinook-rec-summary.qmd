@@ -1,5 +1,5 @@
 ---
-title: "2026 SBC Chinook Recreational Creel  Summary"
+title: "2026 SBC Chinook Recreational Creel Summary"
 format: html
 editor: visual
 editor_options:
