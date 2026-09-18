@@ -14,7 +14,7 @@ website:
     search: true
     contents:
       - text: "SBC Chinook Recreational Catch and Release Summary"
-        href: sbc-chinook-rec-catch-and-release-data-summary.qmd
+        href: sbc-chinook-rec-summary.qmd
         
 format:
   html:
