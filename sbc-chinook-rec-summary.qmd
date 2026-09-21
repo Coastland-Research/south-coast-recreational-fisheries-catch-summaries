@@ -141,6 +141,7 @@ gg.effort.prep<-merge(effort,month.merge,by="MONTH")
 ```
 
 # Annual Summary
+
 ```{r total by disposition all sbc}
 #| label: fig-total-disposition
 #| echo: false
@@ -374,7 +375,7 @@ ggplot(e26, aes(x = YEAR, y = estimate, fill = months)) +
 
 chinook_kept <- data %>%
   filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Kept") %>%
-  filter(MONTH %in% c("June", "July")) %>%
+  filter(MONTH %in% c("June", "July", "August")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
@@ -418,7 +419,7 @@ chinook_rel <- data %>%
   mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released",
                                    TRUE~DISPOSITION)) %>%
   filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Released") %>%
-  filter(MONTH %in% c("June", "July")) %>%
+  filter(MONTH %in% c("June", "July", "August")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
@@ -460,7 +461,7 @@ ggplot(chinook_rel, aes(x = YEAR, y = estimate, fill = YEAR == 2026)) +
 #| fig-width: 5
 #| fig-cap: "Annual Chinook total encounters by month and Area, 2011-2026."
 chinook_en <- data %>%
-  filter(MONTH %in% c("June", "July")) %>%
+  filter(MONTH %in% c("June", "July", "August")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(encounters = sum(ESTIMATE, na.rm = TRUE), .groups = "drop")
@@ -538,7 +539,6 @@ coplot_26 <- ggplot(d26_coho, aes(x = region, y = estimate, fill = Area)) +
 
 cnplot_26
 ```
-
 
 ```{r coho kept area * month}
 #| label: fig-co-kept
@@ -679,4 +679,3 @@ ggplot(gg.effortbyarea,aes(x=YEAR,y=total))+
   labs(x="Year",y="Total Chinook Directed Effort")+
   expand_limits(y=0)
 ```
-
