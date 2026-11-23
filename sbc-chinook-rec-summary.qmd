@@ -41,12 +41,12 @@ require(readxl)
 #| warning: false
 
 # updated to 2026
-data<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="chinook catch and release")
+data<-read_excel("data/2026_data/catch and release data september 2026 version.xlsx",sheet="chinook catch and release")
 
 # updated to 2026
-effort<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="effort by target species")
+effort<-read_excel("data/2026_data/catch and release data september 2026 version.xlsx",sheet="effort by target species")
 
-data_co <- read_excel("data/2026_data/catch and release data july 2026 version.xlsx", sheet = "coho catch and release")
+data_co <- read_excel("data/2026_data/catch and release data september 2026 version.xlsx", sheet = "coho catch and release")
 ```
 
 ```{r data read new effort data - to 2026 July}
@@ -83,14 +83,14 @@ e26$months=factor(e26$MONTH,levels=c("January","February","March","April","May",
 #| warning: false
 
 # chinook
-d26<-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="2026 creel survey chinook")
+d26<-read_excel("data/2026_data/catch and release data september 2026 version.xlsx",sheet="2026 creel survey chinook")
 
 d26.long<-d26%>%mutate(encounters=kept+released) %>%
 pivot_longer(c(5:7),names_to="disposition",values_to ="estimate") %>%
   mutate(area2=factor(area))
 
 # coho
-d26_co <-read_excel("data/2026_data/catch and release data july 2026 version.xlsx",sheet="2026 creel survey coho")
+d26_co <-read_excel("data/2026_data/catch and release data september 2026 version.xlsx",sheet="2026 creel survey coho")
 
 d26_co.long<-d26_co%>%mutate(encounters=kept+released) %>%
 pivot_longer(c(5:7),names_to="disposition",values_to="estimate") %>%
@@ -375,7 +375,7 @@ ggplot(e26, aes(x = YEAR, y = estimate, fill = months)) +
 
 chinook_kept <- data %>%
   filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Kept") %>%
-  filter(MONTH %in% c("June", "July", "August")) %>%
+  filter(MONTH %in% c("June", "July", "August", "September")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
@@ -419,7 +419,7 @@ chinook_rel <- data %>%
   mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released",
                                    TRUE~DISPOSITION)) %>%
   filter(SPECIES == "CHINOOK SALMON", DISPOSITION == "Released") %>%
-  filter(MONTH %in% c("June", "July", "August")) %>%
+  filter(MONTH %in% c("June", "July", "August", "September")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(estimate = sum(ESTIMATE, na.rm = TRUE),.groups = "drop")
@@ -461,7 +461,7 @@ ggplot(chinook_rel, aes(x = YEAR, y = estimate, fill = YEAR == 2026)) +
 #| fig-width: 5
 #| fig-cap: "Annual Chinook total encounters by month and Area, 2011-2026."
 chinook_en <- data %>%
-  filter(MONTH %in% c("June", "July", "August")) %>%
+  filter(MONTH %in% c("June", "July", "August", "September")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
   summarise(encounters = sum(ESTIMATE, na.rm = TRUE), .groups = "drop")
