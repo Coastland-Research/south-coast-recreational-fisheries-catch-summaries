@@ -551,7 +551,7 @@ cnplot_26
 
 coho_kept <- data_co %>%
   filter(SPECIES == "COHO SALMON", DISPOSITION == "kept", YEAR != "5-yr") %>%
-  filter(MONTH %in% c("June", "July")) %>%
+  filter(MONTH %in% c("June", "July", "August", "September")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   mutate(YEAR = as.numeric(YEAR)) %>%
   group_by(YEAR, PFMA, MONTH) %>%
@@ -587,7 +587,7 @@ coho_rel <- data_co%>%
   mutate(DISPOSITION = case_when(DISPOSITION %in% c("Released Legal", "Released Sub-legal")~ "Released",
                                    TRUE~DISPOSITION)) %>%
   filter(SPECIES == "COHO SALMON", DISPOSITION == "released", YEAR != "5-yr") %>%
-  filter(MONTH %in% c("June", "July")) %>%
+  filter(MONTH %in% c("June", "July", "August", "September")) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   mutate(YEAR = as.numeric(YEAR)) %>%
   group_by(YEAR, PFMA, MONTH) %>%
@@ -621,7 +621,7 @@ ggplot(coho_rel, aes(x = YEAR, y = estimate, fill = YEAR == 2026)) +
 #| fig-cap: "Annual Coho total encounters by month and Area, 2011-2026."
 
 coho_en <- data_co %>%
-  filter(MONTH %in% c("June", "July"), YEAR != "5-yr") %>%
+  filter(MONTH %in% c("June", "July", "August", "September"), YEAR != "5-yr") %>%
   mutate(YEAR = as.numeric(YEAR)) %>%
   mutate(MONTH = factor(MONTH, levels = c("May", "June", "July", "August", "September"))) %>%
   group_by(YEAR, PFMA, MONTH) %>%
